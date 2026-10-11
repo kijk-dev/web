@@ -1,0 +1,204 @@
+---
+import { icons } from './icons';
+
+interface Props {
+  big?: boolean;
+}
+const { big = false } = Astro.props;
+---
+
+<div class="order-wrap">
+<div class:list={['order', { big }]} data-install>
+  <div class="order-head">
+    <span class="order-label">Order up</span>
+    <div class="os" role="group" aria-label="Your system">
+      <button type="button" data-os="unix">macOS and Linux</button>
+      <button type="button" data-os="win">Windows</button>
+    </div>
+  </div>
+  <div class="order-body">
+    <code class="order-cmd" data-for="unix">curl -fsSL <span class="nw">https://kijk.dev/install.sh | sh</span></code>
+    <code class="order-cmd" data-for="win">irm <span class="nw">https://kijk.dev/install.ps1 | iex</span></code>
+  </div>
+  <div class="order-foot">
+    <p class="order-note" data-for="unix">No sudo. Your shell files stay as they are.</p>
+    <p class="order-note" data-for="win">In PowerShell. No administrator rights needed.</p>
+    <button type="button" class="copy" data-copy>
+      <span class="copy-idle"><Fragment set:html={icons.copy} />Copy</span>
+      <span class="copy-done" aria-live="polite"><Fragment set:html={icons.check} />Copied</span>
+    </button>
+  </div>
+</div>
+</div>
+
+<style is:global>
+  html:not([data-os='win']) [data-for='win'],
+  html[data-os='win'] [data-for='unix'] {
+    display: none;
+  }
+  html:not([data-os='win']) [data-os='unix'],
+  html[data-os='win'] [data-os='win'] {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .order {
+    --tooth: 7px;
+    position: relative;
+    background: var(--ticket);
+    color: var(--ticket-ink);
+    padding: 0 0 calc(14px + var(--tooth));
+    font-family: var(--mono);
+    font-variation-settings: 'CASL' 0, 'MONO' 1;
+    mask:
+      linear-gradient(#000 0 0) top / 100% calc(100% - var(--tooth)) no-repeat,
+      conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / calc(var(--tooth) * 2) var(--tooth) repeat-x;
+  }
+  .order-wrap {
+    filter: drop-shadow(0 1px 0 rgb(25 29 35 / 0.08)) drop-shadow(0 8px 16px rgb(25 29 35 / 0.12));
+  }
+  .order-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px 10px 16px;
+    border-bottom: 1px dashed color-mix(in srgb, var(--ticket-ink) 28%, transparent);
+  }
+  .order-label {
+    font-weight: 800;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .os {
+    margin-left: auto;
+    display: inline-flex;
+    border: 1px solid color-mix(in srgb, var(--ticket-ink) 35%, transparent);
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  .os button {
+    font: inherit;
+    font-size: 11.5px;
+    border: 0;
+    padding: 2px 8px;
+    background: none;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .os button + button {
+    border-left: 1px solid color-mix(in srgb, var(--ticket-ink) 35%, transparent);
+  }
+  .os button:hover {
+    color: var(--ticket-ink);
+  }
+  @media (prefers-color-scheme: dark) {
+    html:not([data-os='win']) [data-os='unix'],
+    html[data-os='win'] [data-os='win'] {
+      background: var(--paper);
+      color: var(--ink);
+    }
+  }
+  .order-body {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px 2px;
+  }
+  .order-cmd {
+    flex: 1;
+    min-width: 0;
+    font-size: 14.5px;
+    font-weight: 600;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .order-cmd .nw {
+    white-space: nowrap;
+  }
+  .big .order-cmd {
+    font-size: clamp(15px, 1.4vw, 19px);
+  }
+  .copy {
+    flex: none;
+    display: inline-grid;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    border: 0;
+    border-radius: 6px;
+    padding: 6px 12px;
+    background: var(--ember);
+    color: var(--ink);
+    cursor: pointer;
+    box-shadow: 0 1px 0 var(--ember-deep), 0 4px 10px -4px rgb(168 96 3 / 0.5);
+    transition: transform 0.12s, box-shadow 0.12s, background-color 0.12s;
+  }
+  .copy:hover {
+    background: color-mix(in srgb, var(--ember) 88%, #fff);
+  }
+  .copy:active {
+    transform: translateY(1px);
+    box-shadow: 0 0 0 var(--ember-deep);
+  }
+  .copy > span {
+    grid-area: 1 / 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .copy svg {
+    width: 14px;
+    height: 14px;
+  }
+  .copy-done {
+    visibility: hidden;
+  }
+  .copy.done .copy-idle {
+    visibility: hidden;
+  }
+  .copy.done .copy-done {
+    visibility: visible;
+  }
+  .order-foot {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px 0 16px;
+  }
+  .order-note {
+    flex: 1;
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--muted);
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-install]').forEach(box => {
+    box.querySelectorAll<HTMLButtonElement>('[data-os]').forEach(b =>
+      b.addEventListener('click', () => {
+        document.documentElement.dataset.os = b.dataset.os;
+        try {
+          localStorage.setItem('kijk-os', b.dataset.os!);
+        } catch {}
+      }),
+    );
+    const copy = box.querySelector<HTMLButtonElement>('[data-copy]')!;
+    let timer = 0;
+    copy.addEventListener('click', async () => {
+      const os = document.documentElement.dataset.os === 'win' ? 'win' : 'unix';
+      const cmd = box.querySelector<HTMLElement>(`.order-cmd[data-for="${os}"]`)!;
+      try {
+        await navigator.clipboard.writeText(cmd.textContent!);
+      } catch {
+        getSelection()?.selectAllChildren(cmd);
+        return;
+      }
+      copy.classList.add('done');
+      clearTimeout(timer);
+      timer = window.setTimeout(() => copy.classList.remove('done'), 1800);
+    });
+  });
+</script>

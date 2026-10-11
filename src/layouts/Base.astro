@@ -28,6 +28,17 @@ const image = new URL('/social-preview.png', Astro.site);
     <meta property="og:description" content={description} />
     <meta property="og:image" content={image} />
     <meta name="twitter:card" content="summary_large_image" />
+    <script is:inline>
+      (() => {
+        const p = (navigator.userAgentData?.platform || navigator.platform || '').toLowerCase();
+        let os = p.startsWith('win') ? 'win' : 'unix';
+        try {
+          os = localStorage.getItem('kijk-os') || os;
+        } catch {}
+        document.documentElement.dataset.os = os;
+        document.documentElement.dataset.keys = p.startsWith('mac') ? 'mac' : 'pc';
+      })();
+    </script>
   </head>
   <body>
     <slot />

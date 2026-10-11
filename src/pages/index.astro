@@ -1,93 +1,527 @@
 ---
 import Base from '../layouts/Base.astro';
+import KijkWindow from '../components/KijkWindow.astro';
+import Install from '../components/Install.astro';
+import KeysReceipt from '../components/KeysReceipt.astro';
+import { icons } from '../components/icons';
 
 const description =
   'kijk is an agent-native code viewer: a small, fast, read-only view of the work of your running coding agents.';
+const repo = 'https://github.com/kijk-dev/kijk';
 ---
 
 <Base title="kijk — an agent-native code viewer" description={description}>
-  <main>
-    <h1>
+  <header class="top">
+    <a href="/" class="brand" aria-label="kijk home">
       <picture>
         <source media="(prefers-color-scheme: dark)" srcset="/kijk-logo-dark.svg" />
-        <img src="/kijk-logo.svg" alt="kijk" width="156" height="126" />
+        <img src="/kijk-logo.svg" alt="kijk" width="62" height="50" />
       </picture>
-    </h1>
+    </a>
+    <nav aria-label="Site">
+      <a href="#rail">How it works</a>
+      <a href="#keys">Keys</a>
+      <a href={repo} class="gh"><Fragment set:html={icons.github} />GitHub</a>
+    </nav>
+  </header>
 
-    <p class="lead">An agent-native code viewer.</p>
+  <main>
+    <section class="service" aria-labelledby="hero-title">
+      <div class="pitch">
+        <h1 id="hero-title">Your agents cook.<br />You check each plate.</h1>
+        <p class="lead">
+          kijk is an agent-native code viewer. It lists the coding agents that run on your machine. Pick one to see
+          its files, its diff and its git state.
+        </p>
+        <Install />
+        <p class="aside">Or with Go:<br /><code>go install github.com/kijk-dev/kijk@latest</code></p>
+        <p class="aside">Works with Claude Code today. Codex and Pi are planned.</p>
+      </div>
+      <div class="plate-stage">
+        <KijkWindow />
+      </div>
+    </section>
 
-    <p>
-      kijk is a small, fast, read-only view of the work of your running coding agents. It knows which
-      agents run on your machine and lists them. One click shows the folder of an agent: the file tree,
-      the code, the diff, and the git state.
-    </p>
-    <p>
-      It is one small binary that you keep open all day, next to your terminals. Claude Code is
-      supported today.
-    </p>
+    <section id="rail" class="course" aria-labelledby="rail-title">
+      <div class="words">
+        <h2 id="rail-title">Every agent on one rail.</h2>
+        <p>
+          kijk finds the agents that run on your machine. You never open a project by hand. The newest work comes to
+          the top. Tickets appear, change and go as agents start, work and stop.
+        </p>
+        <ul class="facts">
+          <li>Agents in the same folder share one ticket.</li>
+          <li>An agent in a git worktree gets its own.</li>
+          <li><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>1</kbd> to <kbd>9</kbd> opens the first nine.</li>
+        </ul>
+      </div>
+      <ol class="states" aria-label="Ticket states">
+        <li>
+          <div class="t-wrap busy">
+            <div class="ticket">
+              <span class="t-top"><span class="t-key">1</span><span class="t-when">just now</span></span>
+              <span class="t-name">Fix token refresh</span>
+              <span class="t-where">shop-api · fix/token-refresh</span>
+              <span class="t-foot"><Fragment set:html={icons.claude} /><span class="t-state">Busy</span></span>
+            </div>
+          </div>
+          <p><b>Busy.</b> The agent is working. Its mark pulses.</p>
+        </li>
+        <li>
+          <div class="t-wrap finished">
+            <div class="ticket">
+              <span class="t-top"><span class="t-key">2</span><span class="t-when">4m ago</span><span class="t-done"></span></span>
+              <span class="t-name">Add VAT to invoices</span>
+              <span class="t-where">billing · feat/vat</span>
+              <span class="t-foot"><Fragment set:html={icons.claude} /><span class="t-state">Idle</span></span>
+            </div>
+          </div>
+          <p><b>Done.</b> It finished since you last looked. A blue dot waits for you.</p>
+        </li>
+        <li>
+          <div class="t-wrap">
+            <div class="ticket">
+              <span class="t-top"><span class="t-key">3</span><span class="t-when">1h ago</span></span>
+              <span class="t-name">Tidy CLI flags</span>
+              <span class="t-where">cli · main</span>
+              <span class="t-foot"><Fragment set:html={icons.claude} /><span class="t-state">Idle</span></span>
+            </div>
+          </div>
+          <p><b>Idle.</b> Nothing new. The ticket stays until the agent stops.</p>
+        </li>
+      </ol>
+    </section>
 
-    <h2>Install</h2>
-    <p>macOS and Linux:</p>
-    <pre><code>curl -fsSL https://kijk.dev/install.sh | sh</code></pre>
-    <p>Windows (PowerShell):</p>
-    <pre><code>irm https://kijk.dev/install.ps1 | iex</code></pre>
+    <section id="review" class="course" aria-labelledby="review-title">
+      <div class="words">
+        <h2 id="review-title">Check the plate.</h2>
+        <p>
+          Files open read-only, with syntax colours. The diff shows what changed, with line counts like
+          <span class="lc"><span class="lc-add">+40</span> <span class="lc-del">−12</span></span>. Markdown shows
+          rendered, with a bar beside each changed block.
+        </p>
+        <p>When an agent writes to the open file, kijk reloads it and keeps your place.</p>
+      </div>
+      <dl class="menu">
+        <div><dt>The whole folder</dt><dd>The full tree, not only the changed files, coloured by git status.</dd></div>
+        <div><dt>Go to file</dt><dd>Fuzzy search over the folder, plus your recent files.</dd></div>
+        <div><dt>Find in file</dt><dd>Matches, go to line, and the next or previous change.</dd></div>
+        <div><dt>Big files</dt><dd>Scroll smoothly. kijk draws only the lines on the screen.</dd></div>
+        <div><dt>Tabs</dt><dd>One click previews a file. A double click keeps it open.</dd></div>
+      </dl>
+    </section>
 
-    <p class="links">
-      <a href="https://github.com/kijk-dev/kijk">Source and docs on GitHub</a>
-    </p>
+    <section id="ship" class="course" aria-labelledby="ship-title">
+      <div class="words">
+        <h2 id="ship-title">Send it, safely.</h2>
+        <p>
+          Stage, commit, push and fetch from the Git tab. There is no discard, checkout, pull or stash, so a click
+          cannot destroy an agent's work.
+        </p>
+        <p>
+          kijk runs your own <code>git</code>, so your config, credentials and hooks apply. With <code>gh</code> or <code>glab</code>, you also see the pull request of the branch, its checks and its review. kijk never stores a token.
+        </p>
+      </div>
+      <figure class="slip" aria-label="The Git tab of kijk">
+        <div class="kijk slip-win">
+          <div class="k-side" style="display:flex">
+            <div class="branchbar">
+              <Fragment set:html={icons.git} /><span class="branch">feat/vat</span>
+              <span class="lc"><span class="lc-add">+18</span><span class="lc-del">−2</span></span>
+              <span class="pill">↑1</span><span class="tool" aria-hidden="true">Push</span>
+            </div>
+            <div class="prline">
+              <span class="pr-top"><Fragment set:html={icons.github} /><span class="pr-num">#57</span><span class="pr-title">Add VAT to invoices</span></span>
+              <span class="chips"><span class="chip pass"><Fragment set:html={icons.check} />Checks pass</span><span class="chip pass">Approved</span></span>
+            </div>
+            <div class="changes">
+              <h3>Changes <span class="n">2</span></h3>
+              <div class="item change"><input type="checkbox" checked disabled aria-label="Staged" /><span class="letter modified">M</span><span class="name modified">invoice.ts</span><span class="dir">src</span><span class="lc"><span class="lc-add">+9</span><span class="lc-del">−1</span></span></div>
+              <div class="item change"><input type="checkbox" disabled aria-label="Not staged" /><span class="letter modified">M</span><span class="name modified">rates.ts</span><span class="dir">src/tax</span><span class="lc"><span class="lc-add">+4</span><span class="lc-del">−1</span></span></div>
+            </div>
+            <div class="commit">
+              <textarea rows="2" aria-label="Commit message" readonly>Add VAT to invoice totals</textarea>
+              <span class="check"><input type="checkbox" checked disabled /> Push after commit</span>
+              <span class="slip-btn">Commit</span>
+            </div>
+          </div>
+        </div>
+        <figcaption>The Git tab. On a wide screen, try it on a demo agent above.</figcaption>
+      </figure>
+    </section>
+
+    <section id="keys" class="course" aria-labelledby="keys-title">
+      <div class="words">
+        <h2 id="keys-title">Your IntelliJ keys.</h2>
+        <p>
+          kijk uses the IntelliJ default keys, so your hands already know it. Every common action works without the
+          mouse.
+        </p>
+        <p>
+          Some keys belong to the browser in a normal tab. For those, kijk has a second key, and the tooltip shows the
+          one that works in your window.
+        </p>
+      </div>
+      <KeysReceipt />
+    </section>
+
+    <section class="course single" aria-labelledby="one-title">
+      <div class="words">
+        <h2 id="one-title">One agent is enough.</h2>
+        <p>
+          You don't need twenty agents. With one, kijk is still a quick way to see what it changed: a live view
+          of its folder, its diff and its git state, next to your terminal. One small binary that you keep open all
+          day.
+        </p>
+      </div>
+      <dl class="menu needs">
+        <div><dt>Runs on</dt><dd>macOS, Linux and Windows.</dd></div>
+        <div><dt>Needs</dt><dd><code>git</code>. Without it, you see the files but no Git tab.</dd></div>
+        <div><dt>Opens in</dt><dd>An app window with Chrome, Edge, Brave, Chromium or Vivaldi. Otherwise a normal browser tab.</dd></div>
+        <div><dt>Agents</dt><dd>Claude Code today. Codex and Pi are planned.</dd></div>
+        <div><dt>Updates</dt><dd>Run <code>kijk update</code>, or click Update in the status bar.</dd></div>
+      </dl>
+    </section>
+
+    <section class="close" aria-labelledby="close-title">
+      <h2 id="close-title">Install kijk in one line.</h2>
+      <p>Then run <code>kijk</code>, and your agents are on the rail.</p>
+      <div class="close-ticket"><Install big /></div>
+      <p class="close-links">
+        <a href={repo}>Source and docs on GitHub</a>
+      </p>
+    </section>
   </main>
-  <footer>The name is Dutch for “look”. MIT licensed.</footer>
+
+  <footer class="foot">
+    <span>kijk is Dutch for “look”.</span>
+    <span>MIT licensed.</span>
+    <a href={repo}>GitHub</a>
+  </footer>
 </Base>
 
 <style>
-  main,
-  footer {
-    max-width: 40rem;
+  .top {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    max-width: 1680px;
     margin: 0 auto;
-    padding: 0 1.5rem;
+    padding: 18px clamp(20px, 4vw, 48px) 0;
   }
-
-  main {
-    padding-top: 4rem;
-  }
-
-  h1 {
-    margin: 0;
+  .brand {
+    display: block;
     line-height: 0;
   }
+  .brand img {
+    height: 44px;
+    width: auto;
+  }
+  nav {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: clamp(14px, 2.4vw, 28px);
+    font-size: 15px;
+  }
+  nav a {
+    color: var(--text);
+    text-decoration: none;
+  }
+  nav a:hover {
+    color: var(--blue);
+  }
+  .gh {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
 
+  .service {
+    display: grid;
+    grid-template-columns: minmax(300px, 370px) minmax(0, 1fr);
+    gap: clamp(28px, 3vw, 44px);
+    max-width: 1680px;
+    margin: 0 auto;
+    padding: 34px 0 0 clamp(20px, 4vw, 48px);
+  }
+  .pitch {
+    padding-top: 26px;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(1.85rem, 1rem + 1.2vw, 2.15rem);
+    line-height: 1.08;
+  }
   .lead {
-    font-size: 2rem;
-    line-height: 1.2;
-    font-weight: 800;
-    font-variation-settings: 'CASL' 1, 'MONO' 0;
-    margin: 1.5rem 0 1rem;
-  }
-
-  h2 {
-    font-weight: 800;
-    font-variation-settings: 'CASL' 1, 'MONO' 0;
-    margin-top: 2.5rem;
-  }
-
-  pre {
-    background: var(--code-bg);
-    border: 1px solid var(--hairline);
-    border-radius: 6px;
-    padding: 0.75rem 1rem;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-    font-size: 1rem;
-  }
-
-  .links {
-    margin-top: 2rem;
-  }
-
-  footer {
-    margin-top: 4rem;
-    padding-bottom: 2rem;
+    margin: 18px 0 28px;
     color: var(--muted);
-    font-size: 0.95rem;
+    max-width: 34ch;
+  }
+  .aside {
+    margin: 14px 0 0;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .aside + .aside {
+    margin-top: 6px;
+  }
+  .aside code {
+    font-size: 13px;
+    color: var(--text);
+    overflow-wrap: anywhere;
+  }
+  .plate-stage {
+    min-width: 0;
+    height: clamp(580px, calc(100svh - 110px), 820px);
+  }
+  .plate-stage :global(.kijk) {
+    height: 100%;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  .course {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(32px, 6vw, 96px);
+    align-items: start;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: clamp(80px, 11vw, 150px) clamp(20px, 4vw, 48px) 0;
+  }
+  h2 {
+    margin: 0 0 16px;
+    font-size: clamp(1.6rem, 1.3rem + 0.8vw, 2rem);
+    line-height: 1.12;
+  }
+  .words p {
+    margin: 0 0 14px;
+    max-width: 44ch;
+  }
+  .words code,
+  .menu code {
+    font-size: 0.92em;
+  }
+  .facts {
+    margin: 22px 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 8px;
+    font-size: 15px;
+    color: var(--muted);
+  }
+  .facts li {
+    padding-left: 18px;
+    position: relative;
+  }
+  .facts li::before {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: 0.7em;
+    width: 7px;
+    height: 1px;
+    background: var(--edge);
+  }
+  kbd {
+    font-size: 0.85em;
+    padding: 1px 5px;
+    border: 1px solid var(--hairline);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    background: var(--win);
+    color: var(--text);
+  }
+
+  .states {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+    font-size: 14px;
+  }
+  .states p {
+    margin: 16px 0 0;
+    color: var(--muted);
+  }
+  .states b {
+    color: var(--text);
+  }
+  .states .ticket {
+    cursor: default;
+  }
+  .states .ticket:hover {
+    background: var(--ticket);
+  }
+  .states li:nth-child(2) .t-wrap {
+    transform: translateY(12px);
+  }
+  .states li:nth-child(2) p {
+    margin-top: 28px;
+  }
+
+  .lc {
+    font-family: var(--mono);
+    font-variation-settings: 'MONO' 1;
+    font-size: 0.92em;
+    white-space: nowrap;
+  }
+  .lc-add {
+    color: var(--added);
+  }
+  .lc-del {
+    color: var(--removed);
+  }
+
+  .menu {
+    margin: 0;
+    display: grid;
+    border-top: 1px solid var(--hairline);
+  }
+  .menu > div {
+    display: grid;
+    grid-template-columns: 11rem minmax(0, 1fr);
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .menu dt {
+    font-weight: 700;
+    font-variation-settings: 'CASL' 0.5;
+  }
+  .menu dd {
+    margin: 0;
+    color: var(--muted);
+  }
+
+  .slip {
+    margin: 0;
+    justify-self: start;
+    width: min(100%, 380px);
+  }
+  .slip-win {
+    display: block;
+  }
+  .slip-win .k-side {
+    border-right: 0;
+  }
+  .slip-btn {
+    display: block;
+    text-align: center;
+    font-weight: 600;
+    padding: 4px;
+    border-radius: 4px;
+    background: var(--blue-fill);
+    color: #fff;
+  }
+  .slip figcaption {
+    margin-top: 14px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  .close {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: clamp(110px, 14vw, 190px) clamp(20px, 4vw, 48px) 0;
+    text-align: center;
+  }
+  .close h2 {
+    font-size: clamp(2rem, 1.4rem + 1.4vw, 2.6rem);
+  }
+  .close > p {
+    color: var(--muted);
+    margin: 0 auto 30px;
+    max-width: 40ch;
+  }
+  .close-ticket {
+    text-align: left;
+  }
+  .close-links {
+    margin-top: 26px;
+    font-size: 15px;
+  }
+
+  .foot {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 22px;
+    max-width: 1200px;
+    margin: clamp(90px, 10vw, 140px) auto 0;
+    padding: 22px clamp(20px, 4vw, 48px) 36px;
+    border-top: 1px solid var(--hairline);
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  @media (max-width: 1060px) {
+    .service {
+      grid-template-columns: minmax(0, 1fr);
+      padding-right: clamp(20px, 4vw, 48px);
+    }
+    .pitch {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 0 40px;
+      align-items: start;
+      padding-top: 10px;
+    }
+    .pitch h1,
+    .pitch .lead {
+      grid-column: 1;
+    }
+    .pitch :global(.order-wrap) {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      align-self: start;
+    }
+    .pitch .aside {
+      grid-column: 1;
+    }
+    .plate-stage :global(.kijk) {
+      border-radius: 12px;
+    }
+    .plate-stage {
+      height: clamp(520px, 72svh, 720px);
+    }
+    .course {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  @media (max-width: 720px) {
+    .pitch {
+      display: block;
+    }
+    .lead {
+      margin-bottom: 22px;
+    }
+    .plate-stage {
+      height: 640px;
+      margin-top: 32px;
+    }
+    nav a:not(.gh) {
+      display: none;
+    }
+    .states {
+      grid-template-columns: minmax(0, 1fr);
+      max-width: 300px;
+    }
+    .states li:nth-child(2) .t-wrap {
+      transform: none;
+    }
+    .states li:nth-child(2) p {
+      margin-top: 16px;
+    }
+    .menu > div {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 2px;
+    }
   }
 </style>

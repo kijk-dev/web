@@ -1,0 +1,1445 @@
+---
+import { agents, counts, totals, ago, rows, fileRows, type Agent, type Change } from '../data/demo';
+import { icons } from './icons';
+
+const first = 'shop-api';
+const letter = { M: 'M', A: 'A', U: 'U' } as const;
+const statusClass = { M: 'modified', A: 'added', U: 'untracked' } as const;
+
+const base = (p: string) => p.split('/').pop()!;
+const dir = (p: string) => p.split('/').slice(0, -1).join('/');
+
+function tree(a: Agent) {
+  const out: { name: string; depth: number; folder: boolean; open: boolean; path: string; change?: Change }[] = [];
+  const stack: string[] = [];
+  a.tree.forEach((line, i) => {
+    const depth = (line.length - line.trimStart().length) / 2;
+    const name = line.trim();
+    const folder = name.endsWith('/');
+    stack.length = depth;
+    const path = [...stack, name.replace(/\/$/, '')].join('/');
+    if (folder) stack.push(name.replace(/\/$/, ''));
+    const next = a.tree[i + 1];
+    const open = folder && !!next && next.length - next.trimStart().length > line.length - line.trimStart().length;
+    out.push({ name: name.replace(/\/$/, ''), depth, folder, open, path, change: a.changes.find(c => c.path === path) });
+  });
+  return out;
+}
+
+const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
+---
+
+<div class="kijk" data-kijk>
+  <div class="k-title" aria-hidden="true">
+    <span class="lights"><i></i><i></i><i></i></span>
+    <span class="k-title-text" data-title>shop-api — kijk</span>
+  </div>
+  <div class="k-body">
+    <aside class="k-rail" aria-label="Agents">
+      <header>Agents <span class="k-count">{agents.length}</span></header>
+      <ol class="tickets">
+        {
+          agents.map((a, i) => {
+            const t = totals(a);
+            return (
+              <li class:list={['t-wrap', { busy: a.busy, finished: a.finished, on: a.id === first }]} data-agent={a.id}>
+                <button
+                  class="ticket"
+                  type="button"
+                  data-agent={a.id}
+                  aria-pressed={a.id === first ? 'true' : 'false'}
+                  aria-keyshortcuts={`Control+Alt+${i + 1}`}
+                  title={`Ctrl+Alt+${i + 1} to open`}
+                >
+                  <span class="t-top">
+                    <span class="t-key">{i + 1}</span>
+                    <span class="t-when" data-ago={a.agoSec}>{ago(a.agoSec)}</span>
+                    <span class="t-done" aria-label="Finished since you last looked" />
+                  </span>
+                  <span class="t-name">{a.names.join(', ')}</span>
+                  <span class="t-where">
+                    {a.repo} · {a.branch}
+                  </span>
+                  <span class="t-foot">
+                    <Fragment set:html={icons.claude} />
+                    <span class="t-state">{a.busy ? 'Busy' : 'Idle'}</span>
+                    <span class="t-lc">
+                      {t.add || t.del ? (
+                        <>
+                          <span class="lc-add" data-total-add={a.id}>+{t.add}</span> <span class="lc-del">−{t.del}</span>
+                        </>
+                      ) : (
+                        'no changes'
+                      )}
+                    </span>
+                  </span>
+                  <span class="t-stamp" aria-hidden="true">Pushed</span>
+                </button>
+              </li>
+            );
+          })
+        }
+      </ol>
+    </aside>
+
+    <div class="k-plates">
+      {
+        agents.map(a => {
+          const t = totals(a);
+          const open = openOf(a);
+          return (
+            <section class="plate" data-agent={a.id} hidden={a.id !== first} aria-label={`Folder of ${a.repo}`}>
+              <aside class="k-side">
+                <div class="k-side-head">
+                  <span class="k-folder">{a.repo}</span>
+                  <span class="k-icon" aria-hidden="true" set:html={icons.search} />
+                  <div class="k-tabs" role="group" aria-label="Sidebar">
+                    <button type="button" data-tab="files" aria-pressed={a.tab === 'files' ? 'true' : 'false'} aria-label="Files" title="Files">
+                      <Fragment set:html={icons.folder} />
+                    </button>
+                    <button type="button" data-tab="git" aria-pressed={a.tab === 'git' ? 'true' : 'false'} aria-label="Git" title="Git">
+                      <Fragment set:html={icons.git} />
+                    </button>
+                  </div>
+                </div>
+
+                <div class="k-files" data-panel="files" hidden={a.tab !== 'files'}>
+                  {tree(a).map(n =>
+                    n.change ? (
+                      <button type="button" class:list={['item', statusClass[n.change.status], { selected: n.path === open }]} style={`--d:${n.depth}`} data-open={n.path} data-kind="file">
+                        <span class="caret" />
+                        <span class="name">{n.name}</span>
+                      </button>
+                    ) : (
+                      <div class:list={['item', 'inert', { folder: n.folder, open: n.open }]} style={`--d:${n.depth}`}>
+                        <span class="caret">{n.folder && <Fragment set:html={icons.caret} />}</span>
+                        <span class="name">{n.name}</span>
+                      </div>
+                    ),
+                  )}
+                </div>
+
+                <div class="k-git" data-panel="git" hidden={a.tab !== 'git'}>
+                  <div class="branchbar">
+                    <Fragment set:html={icons.git} />
+                    <span class="branch">{a.branch}</span>
+                    {(t.add > 0 || t.del > 0) && (
+                      <span class="lc">
+                        <span class="lc-add" data-total-add={a.id}>+{t.add}</span>
+                        <span class="lc-del">−{t.del}</span>
+                      </span>
+                    )}
+                    <span class="pill" data-ahead hidden>
+                      ↑1
+                    </span>
+                    <button type="button" class="tool" data-push hidden>
+                      Push
+                    </button>
+                  </div>
+                  <div class="prline">
+                    {a.pr ? (
+                      <>
+                        <span class="pr-top">
+                          <Fragment set:html={icons.github} />
+                          <span class="pr-num">#{a.pr.num}</span>
+                          <span class="pr-title">{a.pr.title}</span>
+                        </span>
+                        <span class="chips">
+                          <span class:list={['chip', a.pr.checks]}>
+                            {a.pr.checks === 'pass' ? <Fragment set:html={icons.check} /> : <span class="dot" />}
+                            {a.pr.checks === 'pass' ? 'Checks pass' : 'Checks running'}
+                          </span>
+                          <span class:list={['chip', { pass: a.pr.review === 'Approved' }]}>{a.pr.review}</span>
+                        </span>
+                      </>
+                    ) : (
+                      <span class="pr-none">No pull request for this branch</span>
+                    )}
+                  </div>
+                  <div class="changes">
+                    <h3>
+                      Changes
+                      {a.changes.length > 0 && <span class="n">{a.changes.length}</span>}
+                    </h3>
+                    {a.changes.length === 0 && <p class="k-note">Nothing changed since the last commit.</p>}
+                    {a.changes.map(c => {
+                      const n = counts(c);
+                      return (
+                        <div class:list={['item', 'change', { selected: c.path === open }]} data-open={c.path} data-kind="diff">
+                          <input type="checkbox" aria-label={`Stage ${base(c.path)}`} checked={c.staged} />
+                          <span class:list={['letter', statusClass[c.status]]}>{letter[c.status]}</span>
+                          <span class:list={['name', statusClass[c.status]]}>{base(c.path)}</span>
+                          <span class="dir">{dir(c.path)}</span>
+                          <span class="lc">
+                            <span class="lc-add" data-file-add={`${a.id}:${c.path}`}>+{n.add}</span>
+                            <span class="lc-del">−{n.del}</span>
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p class="k-output" data-output hidden />
+                  <form class="commit" data-commit>
+                    <textarea rows="2" placeholder="Commit message" aria-label="Commit message" />
+                    <label class="check">
+                      <input type="checkbox" data-push-after /> Push after commit
+                    </label>
+                    <button type="submit" disabled>
+                      Commit
+                    </button>
+                  </form>
+                </div>
+              </aside>
+
+              <div class="k-main">
+                {a.changes.length === 0 ? (
+                  <p class="k-empty">No changes. kijk shows them here as soon as the agent writes.</p>
+                ) : (
+                  a.changes.map(c => {
+                    const n = counts(c);
+                    const kind = a.tab === 'files' ? 'file' : 'diff';
+                    const tab = (
+                      <div class="filetabs">
+                        <span class="filetab">
+                          {base(c.path)}
+                          <Fragment set:html={icons.close} />
+                        </span>
+                      </div>
+                    );
+                    return (
+                      <>
+                        <div class="view" data-file={c.path} data-kind="diff" hidden={c.path !== open || kind !== 'diff'}>
+                          {tab}
+                          <div class="diffbar">
+                            <span class="path">{c.path}</span>
+                            <span class="lc">
+                              <span class="lc-add" data-file-add={`${a.id}:${c.path}`}>+{n.add}</span>
+                              <span class="lc-del">−{n.del}</span>
+                            </span>
+                          </div>
+                          <div class="code">
+                            {rows(c).map(r =>
+                              r.kind === 'sep' ? (
+                                <div class="ln sep">
+                                  <span class="gut" />
+                                  <span class="tx">{r.html}</span>
+                                </div>
+                              ) : (
+                                <div class:list={['ln', r.kind]}>
+                                  <span class="gut">
+                                    <span>{r.old ?? ''}</span>
+                                    <span>{r.new ?? ''}</span>
+                                  </span>
+                                  <span class="tx" set:html={r.html} />
+                                </div>
+                              ),
+                            )}
+                          </div>
+                        </div>
+                        <div class="view" data-file={c.path} data-kind="file" hidden={c.path !== open || kind !== 'file'}>
+                          {tab}
+                          <div class="diffbar">
+                            <span class="path">{c.path}</span>
+                            {c.rendered && (
+                              <span class="mode" role="group" aria-label="View">
+                                <button type="button" data-mode="rendered" aria-pressed="true">
+                                  Rendered
+                                </button>
+                                <button type="button" data-mode="source" aria-pressed="false">
+                                  Source
+                                </button>
+                              </span>
+                            )}
+                          </div>
+                          {c.rendered && (
+                            <div class="md" data-show="rendered">
+                              {c.rendered.map(b => (
+                                <div class:list={['md-block', { changed: b.changed }]} set:html={b.html} />
+                              ))}
+                            </div>
+                          )}
+                          <div class="code file" data-show="source" hidden={!!c.rendered}>
+                            {fileRows(c).map(r => (
+                              <div class:list={['ln', r.mark && `ch-${r.mark}`, { live: r.live }]}>
+                                <span class="gut">
+                                  <span />
+                                </span>
+                                <span class="tx" set:html={r.html} />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })
+                )}
+              </div>
+            </section>
+          );
+        })
+      }
+    </div>
+  </div>
+  <footer class="k-status">
+    <span class="k-demo">Demo agents. Your own appear when you run kijk.</span>
+    <span class="k-ver"><i class="dot" />kijk</span>
+  </footer>
+</div>
+
+<style is:global>
+  .kijk {
+    --rail-w: 264px;
+    --side-w: 252px;
+    display: grid;
+    grid-template-rows: 30px minmax(0, 1fr) 24px;
+    background: var(--win);
+    color: var(--text);
+    border-radius: 12px;
+    box-shadow: 0 0 0 1px var(--hairline), var(--shadow);
+    overflow: hidden;
+    font-size: 13px;
+    line-height: 1.4;
+    font-variation-settings: 'CASL' 0, 'MONO' 0;
+  }
+  .kijk button {
+    font: inherit;
+    color: inherit;
+  }
+  .k-title {
+    display: flex;
+    align-items: center;
+    background: var(--panel);
+    border-bottom: 1px solid var(--hairline);
+    padding: 0 12px;
+    position: relative;
+  }
+  .lights {
+    display: flex;
+    gap: 7px;
+  }
+  .lights i {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--hairline);
+  }
+  .k-title-text {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .k-body {
+    display: grid;
+    grid-template-columns: var(--rail-w) minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  /* The rail: tickets tucked under a bar on the pass */
+  .k-rail {
+    position: relative;
+    background: var(--rail-bg);
+    border-right: 1px solid var(--hairline);
+    overflow: auto;
+    scrollbar-width: thin;
+  }
+  .tickets::before {
+    content: '';
+    position: absolute;
+    z-index: 3;
+    left: 9px;
+    top: -34px;
+    bottom: 0;
+    width: 3px;
+    background: var(--edge);
+  }
+  .k-rail header {
+    position: relative;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 34px;
+    padding: 0 14px 0 28px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .k-count {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    padding: 0 6px;
+    border-radius: 8px;
+    background: var(--select);
+    color: var(--blue);
+    letter-spacing: 0;
+  }
+  .tickets {
+    position: relative;
+    list-style: none;
+    margin: 0;
+    padding: 2px 14px 18px 0;
+    display: grid;
+    gap: 10px;
+  }
+  .t-wrap {
+    filter: drop-shadow(0 1px 0 rgb(25 29 35 / 0.08)) drop-shadow(0 3px 5px rgb(25 29 35 / 0.1));
+    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), filter 0.45s;
+  }
+  .t-wrap.on {
+    transform: translateX(14px);
+    filter: drop-shadow(0 2px 2px rgb(168 96 3 / 0.18)) drop-shadow(0 10px 18px rgb(233 160 62 / 0.38));
+  }
+  .ticket {
+    --tooth: 6px;
+    position: relative;
+    display: grid;
+    gap: 2px;
+    width: 100%;
+    text-align: left;
+    border: 0;
+    cursor: pointer;
+    padding: 9px 12px calc(10px + var(--tooth)) 22px;
+    background: var(--ticket);
+    color: var(--ticket-ink);
+    font-family: var(--mono);
+    font-variation-settings: 'CASL' 0, 'MONO' 1;
+    font-size: 12px;
+    line-height: 1.4;
+    mask:
+      linear-gradient(#000 0 0) top / 100% calc(100% - var(--tooth)) no-repeat,
+      conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / calc(var(--tooth) * 2) var(--tooth) repeat-x;
+    transition: background-color 0.3s;
+  }
+  .ticket:hover {
+    background: color-mix(in srgb, var(--ticket-lit) 55%, var(--ticket));
+  }
+  .on .ticket {
+    background: var(--ticket-lit);
+  }
+  .ticket:focus-visible {
+    outline: 2px solid var(--ember);
+    outline-offset: -4px;
+  }
+  .t-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+  }
+  .t-key {
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border: 1px solid currentColor;
+    border-radius: 3px;
+    display: inline-grid;
+    place-items: center;
+    font-weight: 700;
+    font-size: 11px;
+    color: var(--ticket-ink);
+  }
+  .t-when {
+    margin-left: auto;
+    font-variant-numeric: tabular-nums;
+  }
+  .t-done {
+    display: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--blue);
+  }
+  .finished .t-done {
+    display: block;
+  }
+  .t-name {
+    font-weight: 700;
+    font-size: 13px;
+    margin-top: 4px;
+    font-variation-settings: 'CASL' 0.4, 'MONO' 1;
+  }
+  .t-where {
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .t-foot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px dashed color-mix(in srgb, var(--ticket-ink) 25%, transparent);
+  }
+  .t-foot .claude {
+    width: 13px;
+    height: 13px;
+  }
+  .t-state {
+    color: var(--muted);
+  }
+  .busy .t-state {
+    color: var(--ticket-ink);
+  }
+  .t-lc {
+    margin-left: auto;
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+  }
+  .t-stamp {
+    position: absolute;
+    right: 12px;
+    top: 28px;
+    padding: 1px 6px;
+    border: 2px solid var(--blue);
+    border-radius: 4px;
+    color: var(--blue);
+    font-weight: 800;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transform: rotate(-8deg) scale(1.6);
+    opacity: 0;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s;
+    pointer-events: none;
+  }
+  .pushed .t-stamp {
+    opacity: 0.9;
+    transform: rotate(-8deg) scale(1);
+  }
+  .fill {
+    fill: currentColor;
+    stroke: none;
+  }
+  .claude {
+    color: #d97757;
+  }
+  .busy .claude {
+    animation: k-zoom 1.2s ease-in-out infinite;
+  }
+  @keyframes k-zoom {
+    50% {
+      transform: scale(0.55);
+    }
+  }
+
+  /* The plate: kijk's own sidebar and viewer */
+  .k-plates {
+    min-height: 0;
+    display: grid;
+  }
+  .plate {
+    display: grid;
+    grid-template-columns: var(--side-w) minmax(0, 1fr);
+    min-height: 0;
+    grid-area: 1 / 1;
+  }
+  .plate[hidden] {
+    display: none;
+  }
+  .plate.enter {
+    animation: k-plate 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes k-plate {
+    from {
+      opacity: 0;
+      filter: blur(3px);
+    }
+  }
+  .k-side {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--panel);
+    border-right: 1px solid var(--hairline);
+  }
+  .k-side-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 6px 0 12px;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .k-folder {
+    flex: 1;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .k-icon {
+    display: flex;
+    color: var(--muted);
+    padding: 4px;
+  }
+  .k-tabs {
+    display: flex;
+    gap: 2px;
+  }
+  .k-tabs button {
+    display: flex;
+    border: 0;
+    border-radius: 4px;
+    background: none;
+    color: var(--muted);
+    padding: 4px;
+    cursor: pointer;
+  }
+  .k-tabs button:hover {
+    color: var(--text);
+    background: var(--hairline);
+  }
+  .k-tabs button[aria-pressed='true'] {
+    color: var(--blue);
+    background: var(--select);
+  }
+  .k-files,
+  .k-git {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    scrollbar-width: thin;
+  }
+  .k-files {
+    padding: 4px 0;
+  }
+  .k-git:not([hidden]) {
+    display: flex;
+    flex-direction: column;
+  }
+  .item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    height: 24px;
+    padding: 0 10px 0 calc(8px + var(--d, 0) * 14px);
+    border: 0;
+    background: none;
+    text-align: left;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  button.item:hover,
+  .change:hover {
+    background: color-mix(in srgb, var(--select) 55%, transparent);
+  }
+  .item.selected {
+    background: var(--select);
+  }
+  .item.inert {
+    cursor: default;
+  }
+  .caret {
+    width: 14px;
+    display: flex;
+    color: var(--muted);
+  }
+  .caret svg {
+    width: 13px;
+    height: 13px;
+    transition: transform 0.1s;
+  }
+  .item.open .caret svg {
+    transform: rotate(90deg);
+  }
+  .name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .kijk .modified {
+    color: var(--blue);
+  }
+  .kijk .added {
+    color: var(--added);
+  }
+  .kijk .untracked {
+    color: var(--untracked);
+  }
+  .branchbar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .branchbar > svg {
+    width: 14px;
+    height: 14px;
+    color: var(--muted);
+  }
+  .branch {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 30px;
+  }
+  .lc {
+    display: inline-flex;
+    gap: 5px;
+    font-size: 11.5px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .lc-add {
+    color: var(--added);
+  }
+  .lc-del {
+    color: var(--removed);
+  }
+  .pill {
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 0 7px;
+    background: var(--select);
+    color: var(--blue);
+  }
+  .tool {
+    margin-left: auto;
+    font-size: 12px;
+    border: 1px solid var(--edge);
+    background: var(--panel);
+    border-radius: 4px;
+    padding: 0 8px;
+    cursor: pointer;
+  }
+  .tool:hover {
+    background: var(--select);
+    border-color: var(--blue);
+  }
+  .prline {
+    display: grid;
+    gap: 4px;
+    padding: 7px 12px 8px;
+    border-bottom: 1px solid var(--hairline);
+    font-size: 12px;
+  }
+  .pr-top {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+  .pr-top svg {
+    width: 14px;
+    height: 14px;
+  }
+  .pr-num,
+  .pr-none {
+    color: var(--muted);
+  }
+  .pr-title {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding-left: 20px;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    line-height: 16px;
+    padding: 0 6px;
+    border-radius: 8px;
+    border: 1px solid var(--hairline);
+    color: var(--muted);
+  }
+  .chip svg {
+    width: 11px;
+    height: 11px;
+  }
+  .chip.pass {
+    color: var(--added);
+    border-color: color-mix(in srgb, var(--added) 40%, transparent);
+  }
+  .chip.run {
+    color: var(--ember-deep);
+    border-color: color-mix(in srgb, var(--ember-deep) 45%, transparent);
+  }
+  @media (prefers-color-scheme: dark) {
+    .chip.run {
+      color: var(--ember);
+    }
+  }
+  .chip .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: k-fade 1.2s ease-in-out infinite;
+  }
+  @keyframes k-fade {
+    50% {
+      opacity: 0.35;
+    }
+  }
+  .changes {
+    flex: 1;
+  }
+  .changes h3 {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 10px 12px 4px;
+    font: 700 11px/1 var(--sans);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .changes h3 .n {
+    font-weight: 600;
+  }
+  .change {
+    padding-left: 12px;
+  }
+  .change input {
+    margin: 0 2px 0 0;
+    accent-color: var(--blue);
+    cursor: pointer;
+  }
+  .letter {
+    width: 10px;
+    font-weight: 600;
+    font-size: 11px;
+  }
+  .change .dir {
+    color: var(--muted);
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 1000;
+    min-width: 0;
+  }
+  .change .lc {
+    margin-left: auto;
+    padding-left: 6px;
+  }
+  .k-note {
+    margin: 4px 12px;
+    color: var(--muted);
+  }
+  .k-output {
+    margin: 6px 12px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    font: 11.5px/1.4 var(--mono);
+    font-variation-settings: 'MONO' 1;
+    color: var(--added);
+    background: var(--add-bg);
+  }
+  .commit {
+    display: grid;
+    gap: 6px;
+    padding: 8px 12px 10px;
+    border-top: 1px solid var(--hairline);
+  }
+  .commit textarea {
+    font: inherit;
+    resize: none;
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--edge);
+    background: var(--win);
+    color: var(--text);
+    caret-color: var(--blue);
+  }
+  .commit textarea:focus {
+    outline: 2px solid var(--blue);
+    outline-offset: -1px;
+  }
+  .commit .check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .commit .check input {
+    margin: 0;
+    accent-color: var(--blue);
+  }
+  .commit button {
+    font-weight: 600;
+    padding: 4px;
+    border: 0;
+    border-radius: 4px;
+    background: var(--blue-fill);
+    color: #fff !important;
+    cursor: pointer;
+  }
+  .commit button:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--blue-fill) 86%, #000);
+  }
+  .commit button:disabled {
+    font-weight: 400;
+    background: var(--hairline);
+    color: var(--muted) !important;
+    cursor: default;
+  }
+
+  .k-main {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+  }
+  .view {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1;
+  }
+  .view[hidden] {
+    display: none;
+  }
+  .filetabs {
+    display: flex;
+    height: 34px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--hairline);
+    flex: none;
+  }
+  .filetab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 8px 0 12px;
+    font-size: 12px;
+    background: var(--win);
+    border-right: 1px solid var(--hairline);
+    box-shadow: inset 0 -2px var(--blue);
+  }
+  .filetab svg {
+    width: 12px;
+    height: 12px;
+    color: var(--muted);
+  }
+  .diffbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 12px;
+    border-bottom: 1px solid var(--hairline);
+    color: var(--muted);
+    font-size: 12px;
+    flex: none;
+  }
+  .diffbar .path {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .mode {
+    margin-left: auto;
+    display: inline-flex;
+    border: 1px solid var(--edge);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .mode button {
+    border: 0;
+    background: var(--panel);
+    color: var(--muted);
+    font-size: 12px;
+    padding: 0 8px;
+    cursor: pointer;
+  }
+  .mode button + button {
+    border-left: 1px solid var(--edge);
+  }
+  .mode button[aria-pressed='true'] {
+    background: var(--select);
+    color: var(--blue);
+  }
+  .code {
+    flex: 1;
+    overflow: auto;
+    padding: 4px 0 24px;
+    font: 12.5px/19px var(--mono);
+    font-variation-settings: 'CASL' 0, 'MONO' 1;
+    scrollbar-width: thin;
+  }
+  .code[hidden],
+  .md[hidden] {
+    display: none;
+  }
+  .ln {
+    display: flex;
+    min-height: 19px;
+    white-space: pre;
+    width: max-content;
+    min-width: 100%;
+  }
+  .gut {
+    position: sticky;
+    left: 0;
+    display: flex;
+    flex: none;
+    background: var(--win);
+    color: var(--gutter);
+    user-select: none;
+    font-variant-numeric: tabular-nums;
+  }
+  .gut span {
+    width: 4.5ch;
+    padding-right: 1ch;
+    text-align: right;
+  }
+  .tx {
+    padding-left: 1.5ch;
+    padding-right: 2ch;
+  }
+  .ln.add,
+  .ln.add .gut,
+  .ln.live,
+  .ln.live .gut {
+    background: var(--add-bg);
+  }
+  .ln.del,
+  .ln.del .gut {
+    background: var(--del-bg);
+  }
+  .code.file {
+    counter-reset: ln;
+  }
+  .code.file .ln {
+    counter-increment: ln;
+  }
+  .code.file .gut span::before {
+    content: counter(ln);
+  }
+  .code.file .ln.live.shown,
+  .code.file .ln.live.shown .gut {
+    background: none;
+  }
+  .code.file .gut span {
+    width: 5.5ch;
+    padding-right: 1.5ch;
+  }
+  .code.file .ln[class*='ch-'] .gut::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 3px;
+    width: 3px;
+  }
+  .code.file .ch-add .gut::after {
+    background: var(--added);
+  }
+  .code.file .ch-mod .gut::after {
+    background: var(--blue);
+  }
+  .code.file .ch-del .gut::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    right: 0;
+    border-left: 6px solid var(--removed);
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+  }
+  .ln.sep {
+    background: var(--sep-bg);
+    color: var(--muted);
+  }
+  .ln.sep .gut {
+    background: var(--sep-bg);
+    width: 9ch;
+  }
+  .ln.live {
+    display: none;
+  }
+  .ln.live.shown {
+    display: flex;
+    animation: k-flash 1.6s ease-out;
+  }
+  @keyframes k-flash {
+    from {
+      background: color-mix(in srgb, var(--ember) 45%, var(--add-bg));
+    }
+  }
+  .hk {
+    color: var(--hl-keyword);
+  }
+  .ht {
+    color: var(--hl-type);
+  }
+  .hs {
+    color: var(--hl-string);
+  }
+  .hn {
+    color: var(--hl-number);
+  }
+  .hc {
+    color: var(--hl-comment);
+    font-style: italic;
+  }
+  .hf {
+    color: var(--hl-function);
+  }
+  .md {
+    flex: 1;
+    overflow: auto;
+    padding: 18px 36px 32px;
+    font-size: 14px;
+    line-height: 1.6;
+    max-width: 760px;
+  }
+  .md-block {
+    position: relative;
+  }
+  .md-block.changed::before {
+    content: '';
+    position: absolute;
+    left: -20px;
+    top: 4px;
+    bottom: 4px;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--blue);
+  }
+  .md h1,
+  .md h2 {
+    margin: 0.2em 0 0.5em;
+    padding-bottom: 0.25em;
+    border-bottom: 1px solid var(--hairline);
+    font-family: var(--sans);
+    font-variation-settings: 'CASL' 0;
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+  .md h1 {
+    font-size: 1.6em;
+  }
+  .md h2 {
+    font-size: 1.3em;
+    margin-top: 1em;
+  }
+  .md p {
+    margin: 0 0 0.9em;
+  }
+  .md code {
+    font-size: 0.9em;
+    background: var(--panel);
+    padding: 0.1em 0.35em;
+    border-radius: 4px;
+  }
+  .md pre {
+    margin: 0 0 0.9em;
+    padding: 10px 12px;
+    background: var(--panel);
+    border-radius: 6px;
+    font-size: 12.5px;
+    overflow: auto;
+  }
+  .md pre code {
+    background: none;
+    padding: 0;
+  }
+  .md a {
+    cursor: pointer;
+  }
+  .k-empty {
+    margin: auto;
+    padding: 24px;
+    max-width: 30ch;
+    text-align: center;
+    color: var(--muted);
+  }
+  .k-status {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 12px;
+    background: var(--panel);
+    border-top: 1px solid var(--hairline);
+    color: var(--muted);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .k-demo {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .k-ver {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .k-ver .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--blue);
+  }
+
+  @media (max-width: 1180px) {
+    .kijk {
+      --rail-w: 236px;
+      --side-w: 230px;
+    }
+  }
+  @media (max-width: 1360px) {
+    .plate {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .k-side {
+      display: none;
+    }
+  }
+  @media (max-width: 640px) {
+    .kijk {
+      border-radius: 10px;
+    }
+    .k-body {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+    .k-rail {
+      border-right: 0;
+      border-bottom: 1px solid var(--hairline);
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .tickets::before {
+      left: 0;
+      right: 0;
+      top: 10px;
+      bottom: auto;
+      width: auto;
+      height: 3px;
+    }
+    .k-rail header {
+      display: none;
+    }
+    .k-rail {
+      scroll-snap-type: x mandatory;
+      scroll-padding-left: 14px;
+    }
+    .tickets {
+      width: max-content;
+      grid-auto-flow: column;
+      grid-auto-columns: 210px;
+      gap: 16px;
+      padding: 0 14px 16px;
+    }
+    .t-wrap {
+      scroll-snap-align: start;
+    }
+    .t-wrap.on {
+      transform: translateY(8px);
+    }
+    .ticket {
+      padding: 14px 12px calc(10px + var(--tooth));
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .busy .claude {
+      animation-name: k-fade;
+    }
+    .chip .dot {
+      animation: none;
+    }
+    .t-wrap,
+    .plate.enter,
+    .ln.live.shown,
+    .t-stamp {
+      transition: none;
+      animation: none;
+    }
+  }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-kijk]')!;
+  const title = root.querySelector<HTMLElement>('[data-title]')!;
+  const wraps = [...root.querySelectorAll<HTMLElement>('.t-wrap')];
+  const plates = [...root.querySelectorAll<HTMLElement>('.plate')];
+  const loadedAt = Date.now();
+  const rail = root.querySelector<HTMLElement>('.k-rail')!;
+  const railLeft = (w: HTMLElement) => rail.scrollLeft + w.getBoundingClientRect().left - rail.getBoundingClientRect().left - 14;
+  const showTicket = (w: HTMLElement) => {
+    if (rail.scrollWidth > rail.clientWidth + 4) rail.scrollTo({ left: railLeft(w), behavior: 'smooth' });
+  };
+  const firstOn = wraps.find(w => w.classList.contains('on'));
+  if (firstOn && rail.scrollWidth > rail.clientWidth + 4) rail.scrollLeft = railLeft(firstOn);
+
+  function pick(id: string, focus = false) {
+    wraps.forEach(w => {
+      const on = w.dataset.agent === id;
+      w.classList.toggle('on', on);
+      const b = w.querySelector('button')!;
+      b.setAttribute('aria-pressed', String(on));
+      if (on) {
+        w.classList.remove('finished');
+        if (focus) b.focus({ preventScroll: true });
+        showTicket(w);
+      }
+    });
+    plates.forEach(p => {
+      const on = p.dataset.agent === id;
+      if (on && p.hidden) {
+        p.classList.remove('enter');
+        void p.offsetWidth;
+        p.classList.add('enter');
+      }
+      p.hidden = !on;
+    });
+    const repo = root.querySelector(`.plate[data-agent="${id}"] .k-folder`)?.textContent;
+    title.textContent = `${repo} — kijk`;
+  }
+
+  root.addEventListener('click', e => {
+    const t = e.target as HTMLElement;
+    const ticket = t.closest<HTMLElement>('.ticket');
+    if (ticket) return pick(ticket.dataset.agent!);
+
+    const plate = t.closest<HTMLElement>('.plate');
+    if (!plate) return;
+
+    const tab = t.closest<HTMLButtonElement>('[data-tab]');
+    if (tab) {
+      plate.querySelectorAll<HTMLButtonElement>('[data-tab]').forEach(b => b.setAttribute('aria-pressed', String(b === tab)));
+      plate.querySelectorAll<HTMLElement>('[data-panel]').forEach(p => (p.hidden = p.dataset.panel !== tab.dataset.tab));
+      return;
+    }
+
+    const mode = t.closest<HTMLButtonElement>('[data-mode]');
+    if (mode) {
+      const view = mode.closest('.view')!;
+      view.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach(b => b.setAttribute('aria-pressed', String(b === mode)));
+      view.querySelectorAll<HTMLElement>('[data-show]').forEach(s => (s.hidden = s.dataset.show !== mode.dataset.mode));
+      return;
+    }
+
+    if (t.closest('input, textarea, label, .tool')) return;
+    const open = t.closest<HTMLElement>('[data-open]');
+    if (open) {
+      const path = open.dataset.open;
+      plate.querySelectorAll<HTMLElement>('[data-open]').forEach(o => o.classList.toggle('selected', o.dataset.open === path));
+      plate.querySelectorAll<HTMLElement>('.view').forEach(v => (v.hidden = v.dataset.file !== path || v.dataset.kind !== open.dataset.kind));
+    }
+  });
+
+  // Ctrl+Alt+1…7 opens agent 1 to 7, as in kijk. e.code, because Alt changes e.key on macOS.
+  document.addEventListener('keydown', e => {
+    if (!e.ctrlKey || !e.altKey) return;
+    const n = /^Digit([1-9])$/.exec(e.code)?.[1];
+    const w = n && wraps[+n - 1];
+    if (!w) return;
+    e.preventDefault();
+    pick(w.dataset.agent!, true);
+  });
+  root.querySelector('.tickets')!.addEventListener('keydown', e => {
+    const k = (e as KeyboardEvent).key;
+    if (k !== 'ArrowDown' && k !== 'ArrowUp' && k !== 'ArrowLeft' && k !== 'ArrowRight') return;
+    const i = wraps.findIndex(w => w.classList.contains('on'));
+    const next = wraps[(i + (k === 'ArrowDown' || k === 'ArrowRight' ? 1 : -1) + wraps.length) % wraps.length];
+    e.preventDefault();
+    pick(next.dataset.agent!, true);
+  });
+
+  // Staging, commit and push run in the page only.
+  root.querySelectorAll<HTMLFormElement>('[data-commit]').forEach(form => {
+    const plate = form.closest<HTMLElement>('.plate')!;
+    const id = plate.dataset.agent!;
+    const msg = form.querySelector('textarea')!;
+    const btn = form.querySelector<HTMLButtonElement>('button')!;
+    const out = plate.querySelector<HTMLElement>('[data-output]')!;
+    const ahead = plate.querySelector<HTMLElement>('[data-ahead]')!;
+    const push = plate.querySelector<HTMLButtonElement>('[data-push]')!;
+    const staged = () => [...plate.querySelectorAll<HTMLInputElement>('.change input:checked')];
+    const sync = () => (btn.disabled = !msg.value.trim() || staged().length === 0);
+    plate.addEventListener('input', sync);
+    plate.addEventListener('change', sync);
+    sync();
+
+    const doPush = () => {
+      ahead.hidden = true;
+      push.hidden = true;
+      out.hidden = false;
+      out.textContent = `Pushed to origin/${plate.querySelector('.branch')!.textContent}`;
+      root.querySelector(`.t-wrap[data-agent="${id}"]`)!.classList.add('pushed');
+    };
+    push.addEventListener('click', doPush);
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const done = staged();
+      done.forEach(i => {
+        const row = i.closest<HTMLElement>('.change')!;
+        plate.querySelectorAll<HTMLElement>(`[data-file="${row.dataset.open}"]`).forEach(v => v.remove());
+        plate.querySelectorAll<HTMLButtonElement>(`.k-files [data-open="${row.dataset.open}"]`).forEach(f => {
+          f.removeAttribute('data-open');
+          f.className = 'item inert';
+          f.disabled = true;
+        });
+        row.remove();
+      });
+      const left = plate.querySelectorAll('.change').length;
+      const n = plate.querySelector('.changes h3 .n');
+      if (n) n.textContent = left ? String(left) : '';
+      out.hidden = false;
+      out.textContent = `Committed ${done.length} file${done.length === 1 ? '' : 's'}: ${msg.value.trim().split('\n')[0]}`;
+      msg.value = '';
+      sync();
+      const first = plate.querySelector<HTMLElement>('.change');
+      if (first) first.click();
+      else if (!plate.querySelector('.view')) {
+        const main = plate.querySelector('.k-main')!;
+        main.innerHTML = '<p class="k-empty">Nothing changed since the last commit.</p>';
+      }
+      if (form.querySelector<HTMLInputElement>('[data-push-after]')!.checked) doPush();
+      else {
+        ahead.hidden = false;
+        push.hidden = false;
+      }
+    });
+  });
+
+  // Live: times tick, a busy agent writes a line into the open file, another one finishes.
+  const whens = [...root.querySelectorAll<HTMLElement>('.t-when')];
+  const ago = (s: number) => (s < 60 ? 'just now' : s < 3600 ? `${Math.floor(s / 60)}m ago` : `${Math.floor(s / 3600)}h ago`);
+  setInterval(() => {
+    const el = (Date.now() - loadedAt) / 1000;
+    whens.forEach(w => {
+      const busyNow = w.closest('.t-wrap')!.classList.contains('busy') && w.closest('[data-agent="docs"], [data-agent="shop-api"]');
+      w.textContent = ago(busyNow ? 0 : +w.dataset.ago! + el);
+    });
+  }, 15000);
+
+  const bump = (sel: string) =>
+    root.querySelectorAll<HTMLElement>(sel).forEach(n => (n.textContent = `+${parseInt(n.textContent!.slice(1), 10) + 1}`));
+  setTimeout(() => {
+    const live = root.querySelectorAll<HTMLElement>('.plate[data-agent="shop-api"] .ln.live');
+    if (!live.length) return;
+    live.forEach(l => l.classList.add('shown'));
+    bump('[data-file-add="shop-api:internal/auth/refresh.go"]');
+    bump('[data-total-add="shop-api"]');
+  }, 6000);
+
+  setTimeout(() => {
+    const w = root.querySelector<HTMLElement>('.t-wrap[data-agent="search"]')!;
+    w.classList.remove('busy');
+    w.querySelector('.t-state')!.textContent = 'Idle';
+    if (!w.classList.contains('on')) w.classList.add('finished');
+  }, 14000);
+</script>

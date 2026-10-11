@@ -1,0 +1,145 @@
+---
+const keys: [string, string, string][] = [
+  ['Open agent 1 to 9', '⌃⌥1 … ⌃⌥9', 'Ctrl+Alt+1 … 9'],
+  ['Go to file', '⇧⌘O', 'Ctrl+Shift+N'],
+  ['Recent files', '⌘E', 'Ctrl+E'],
+  ['Find in file', '⌘F', 'Ctrl+F'],
+  ['Next and previous match', '⌘G  ⇧⌘G', 'F3  Shift+F3'],
+  ['Go to line', '⌘L', 'Ctrl+G'],
+  ['Next and previous change', 'F7  ⇧F7', 'F7  Shift+F7'],
+  ['Back and forward', '⌘[  ⌘]', 'Ctrl+Alt+←  →'],
+  ['Files tab', '⌘1', 'Alt+1'],
+  ['Git tab', '⌘0', 'Alt+0'],
+  ['Commit', '⌘K', 'Ctrl+K'],
+  ['Push', '⇧⌘K', 'Ctrl+Shift+K'],
+  ['Close tab', '⌘W', 'Ctrl+F4'],
+];
+---
+
+<div class="receipt-wrap">
+  <div class="receipt" data-receipt>
+    <div class="r-head">
+      <span>kijk · keys</span>
+      <div class="os" role="group" aria-label="Keyboard">
+        <button type="button" data-keys="mac">macOS</button>
+        <button type="button" data-keys="pc">Windows and Linux</button>
+      </div>
+    </div>
+    <table>
+      <caption class="sr-only">Keyboard shortcuts</caption>
+      <tbody>
+        {
+          keys.map(([what, mac, pc]) => (
+            <tr>
+              <th scope="row">
+                <span>{what}</span>
+              </th>
+              <td>
+                <kbd data-k="mac">{mac}</kbd>
+                <kbd data-k="pc">{pc}</kbd>
+              </td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+    <p class="r-foot">Thank you. Come again.</p>
+  </div>
+</div>
+
+<style is:global>
+  html:not([data-keys='pc']) [data-k='pc'],
+  html[data-keys='pc'] [data-k='mac'] {
+    display: none;
+  }
+  html:not([data-keys='pc']) [data-keys='mac'],
+  html[data-keys='pc'] [data-keys='pc'] {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  @media (prefers-color-scheme: dark) {
+    html:not([data-keys='pc']) [data-keys='mac'],
+    html[data-keys='pc'] [data-keys='pc'] {
+      background: var(--paper);
+      color: var(--ink);
+    }
+  }
+  .receipt-wrap {
+    filter: drop-shadow(0 1px 0 rgb(25 29 35 / 0.08)) drop-shadow(0 14px 22px rgb(25 29 35 / 0.12));
+    max-width: 30rem;
+  }
+  .receipt {
+    --tooth: 7px;
+    background: var(--ticket);
+    color: var(--ticket-ink);
+    padding: calc(16px + var(--tooth)) 22px calc(18px + var(--tooth));
+    font-family: var(--mono);
+    font-variation-settings: 'CASL' 0, 'MONO' 1;
+    font-size: 14px;
+    mask:
+      conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top / calc(var(--tooth) * 2) var(--tooth) repeat-x,
+      linear-gradient(#000 0 0) center / 100% calc(100% - 2 * var(--tooth)) no-repeat,
+      conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / calc(var(--tooth) * 2) var(--tooth) repeat-x;
+  }
+  .r-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 12px;
+    margin-bottom: 8px;
+    border-bottom: 1px dashed color-mix(in srgb, var(--ticket-ink) 30%, transparent);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 12px;
+  }
+  .receipt table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .receipt th {
+    text-align: left;
+    font-weight: 400;
+    padding: 4px 0;
+    width: 100%;
+  }
+  .receipt th span {
+    display: flex;
+    gap: 6px;
+    align-items: baseline;
+  }
+  .receipt th span::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px dotted color-mix(in srgb, var(--ticket-ink) 45%, transparent);
+    transform: translateY(-4px);
+    margin-right: 8px;
+  }
+  .receipt td {
+    white-space: pre;
+    text-align: right;
+    padding: 4px 0;
+  }
+  .receipt kbd {
+    font: inherit;
+    font-weight: 700;
+  }
+  .r-foot {
+    margin: 14px 0 0;
+    padding-top: 12px;
+    border-top: 1px dashed color-mix(in srgb, var(--ticket-ink) 30%, transparent);
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('button[data-keys]').forEach(b =>
+    b.addEventListener('click', () => {
+      document.documentElement.dataset.keys = b.dataset.keys;
+    }),
+  );
+</script>
