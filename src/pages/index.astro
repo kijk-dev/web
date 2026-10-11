@@ -1,0 +1,93 @@
+---
+import Base from '../layouts/Base.astro';
+
+const description =
+  'kijk is an agent-native code viewer: a small, fast, read-only view of the work of your running coding agents.';
+---
+
+<Base title="kijk — an agent-native code viewer" description={description}>
+  <main>
+    <h1>
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="/kijk-logo-dark.svg" />
+        <img src="/kijk-logo.svg" alt="kijk" width="156" height="126" />
+      </picture>
+    </h1>
+
+    <p class="lead">An agent-native code viewer.</p>
+
+    <p>
+      kijk is a small, fast, read-only view of the work of your running coding agents. It knows which
+      agents run on your machine and lists them. One click shows the folder of an agent: the file tree,
+      the code, the diff, and the git state.
+    </p>
+    <p>
+      It is one small binary that you keep open all day, next to your terminals. Claude Code is
+      supported today.
+    </p>
+
+    <h2>Install</h2>
+    <p>macOS and Linux:</p>
+    <pre><code>curl -fsSL https://kijk.dev/install.sh | sh</code></pre>
+    <p>Windows (PowerShell):</p>
+    <pre><code>irm https://kijk.dev/install.ps1 | iex</code></pre>
+
+    <p class="links">
+      <a href="https://github.com/kijk-dev/kijk">Source and docs on GitHub</a>
+    </p>
+  </main>
+  <footer>The name is Dutch for “look”. MIT licensed.</footer>
+</Base>
+
+<style>
+  main,
+  footer {
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  main {
+    padding-top: 4rem;
+  }
+
+  h1 {
+    margin: 0;
+    line-height: 0;
+  }
+
+  .lead {
+    font-size: 2rem;
+    line-height: 1.2;
+    font-weight: 800;
+    font-variation-settings: 'CASL' 1, 'MONO' 0;
+    margin: 1.5rem 0 1rem;
+  }
+
+  h2 {
+    font-weight: 800;
+    font-variation-settings: 'CASL' 1, 'MONO' 0;
+    margin-top: 2.5rem;
+  }
+
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--hairline);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-size: 1rem;
+  }
+
+  .links {
+    margin-top: 2rem;
+  }
+
+  footer {
+    margin-top: 4rem;
+    padding-bottom: 2rem;
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+</style>

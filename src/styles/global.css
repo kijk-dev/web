@@ -1,0 +1,46 @@
+:root {
+  --ink: #191d23;
+  --paper: #f5f7f9;
+  --muted: #646971;
+  --hairline: #dde0e4;
+  --accent: #1e66ca;
+  --code-bg: #ffffff;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #e8eaed;
+    --paper: #191d23;
+    --muted: #a3a8b0;
+    --hairline: #343a43;
+    --accent: #74a6ef;
+    --code-bg: #11151a;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Recursive Variable', system-ui, sans-serif;
+  font-variation-settings: 'CASL' 0, 'MONO' 0;
+  font-size: 1.125rem;
+  line-height: 1.6;
+}
+
+a {
+  color: var(--accent);
+}
+
+code,
+pre {
+  font-family: 'Recursive Variable', ui-monospace, monospace;
+  font-variation-settings: 'CASL' 0, 'MONO' 1;
+}
