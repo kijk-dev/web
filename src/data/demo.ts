@@ -22,7 +22,7 @@ export interface Agent {
   busy: boolean;
   finished?: boolean;
   agoSec: number;
-  pr?: { num: number; title: string; checks: 'pass' | 'run'; review: string };
+  pr?: { host: 'github' | 'gitlab'; num: number; title: string; checks: 'pass' | 'run'; review: string };
   ahead?: number;
   tree: string[];
   changes: Change[];
@@ -35,10 +35,11 @@ export const agents: Agent[] = [
     id: 'docs',
     names: ['Rewrite the install guide', 'Fix broken links'],
     repo: 'docs',
-    branch: 'main',
+    branch: 'docs/install-guide',
     busy: true,
     agoSec: 0,
     tab: 'git',
+    pr: { host: 'gitlab', num: 23, title: 'Rewrite the install guide', checks: 'run', review: 'Review required' },
     tree: ['guide/', '  install.md', '  update.md', '  setup.md', 'images/', 'README.md', 'mkdocs.yml'],
     changes: [
       {
@@ -141,7 +142,7 @@ export const agents: Agent[] = [
     busy: true,
     agoSec: 0,
     tab: 'git',
-    pr: { num: 142, title: 'Fix token refresh race', checks: 'run', review: 'Review required' },
+    pr: { host: 'github', num: 142, title: 'Fix token refresh race', checks: 'run', review: 'Review required' },
     open: 'internal/auth/refresh.go',
     tree: ['cmd/', 'internal/', '  auth/', '    clock.go', '    refresh.go', '    refresh_test.go', '    token.go', '  billing/', 'go.mod', 'go.sum', 'README.md'],
     changes: [
@@ -274,6 +275,7 @@ export const agents: Agent[] = [
     branch: 'tf/vpc',
     busy: true,
     agoSec: 190,
+    pr: { host: 'gitlab', num: 8, title: 'Plan the VPC', checks: 'pass', review: 'Review required' },
     tab: 'files',
     tree: ['modules/', 'network/', '  main.tf', '  vpc.tf', '  outputs.tf', 'providers.tf', 'README.md'],
     changes: [
@@ -308,7 +310,7 @@ export const agents: Agent[] = [
     finished: true,
     agoSec: 260,
     tab: 'git',
-    pr: { num: 57, title: 'Add VAT to invoices', checks: 'pass', review: 'Approved' },
+    pr: { host: 'github', num: 57, title: 'Add VAT to invoices', checks: 'pass', review: 'Approved' },
     tree: ['src/', '  invoice.ts', '  tax/', '    rates.ts', '    vat.test.ts', 'package.json', 'tsconfig.json'],
     changes: [
       {

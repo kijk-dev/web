@@ -140,14 +140,14 @@ const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
                     {a.pr ? (
                       <>
                         <span class="pr-top">
-                          <Fragment set:html={icons.github} />
-                          <span class="pr-num">#{a.pr.num}</span>
+                          <Fragment set:html={icons[a.pr.host]} />
+                          <span class="pr-num">{a.pr.host === 'gitlab' ? '!' : '#'}{a.pr.num}</span>
                           <span class="pr-title">{a.pr.title}</span>
                         </span>
                         <span class="chips">
                           <span class:list={['chip', a.pr.checks]}>
                             {a.pr.checks === 'pass' ? <Fragment set:html={icons.check} /> : <span class="dot" />}
-                            {a.pr.checks === 'pass' ? 'Checks pass' : 'Checks running'}
+                            {a.pr.host === 'gitlab' ? 'Pipeline' : 'Checks'} {a.pr.checks === 'pass' ? 'passed' : 'running'}
                           </span>
                           <span class:list={['chip', { pass: a.pr.review === 'Approved' }]}>{a.pr.review}</span>
                         </span>
@@ -518,6 +518,9 @@ const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
   }
   .claude {
     color: #d97757;
+  }
+  .gitlab {
+    color: #fc6d26;
   }
   .busy .claude {
     animation: k-zoom 1.2s ease-in-out infinite;
