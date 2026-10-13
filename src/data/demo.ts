@@ -544,3 +544,84 @@ export function fileRows(c: Change): FileRow[] {
   (c.after ?? []).forEach(t => push(t));
   return out;
 }
+
+// Demo agents on a remote machine, for the machines section.
+export const devbox: Agent[] = [
+  {
+    id: 'spam-model',
+    names: ['Retrain the spam filter'],
+    repo: 'spam-model',
+    branch: 'feat/retrain',
+    busy: true,
+    agoSec: 2,
+    tree: [],
+    tab: 'git',
+    changes: [
+      {
+        path: 'train.py',
+        status: 'M',
+        lang: 'py',
+        diff: [
+          '@@ -18,12 +18,16 @@ def train(cfg):',
+          ' def train(cfg):',
+          '     model = build_model(cfg)',
+          '-    opt = torch.optim.SGD(model.parameters(), lr=cfg.lr)',
+          '+    opt = torch.optim.AdamW(model.parameters(), lr=cfg.lr, weight_decay=0.01)',
+          '+    sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, cfg.epochs)',
+          '     for epoch in range(cfg.epochs):',
+          '         for batch in loader(cfg):',
+          '             loss = model(batch).loss',
+          '             loss.backward()',
+          '             opt.step()',
+          '             opt.zero_grad()',
+          '-        print(epoch, loss)',
+          '+        sched.step()',
+          '+        log(epoch, loss.item(), sched.get_last_lr())',
+          '+    save(model, cfg.out)',
+          '     return model',
+        ],
+      },
+      {
+        path: 'data/loader.py',
+        status: 'M',
+        lang: 'py',
+        diff: ['@@ -4,3 +4,4 @@', '-BATCH = 32', '+BATCH = 128', '+WORKERS = 8', ' '],
+      },
+      {
+        path: 'notes/run-42.md',
+        status: 'A',
+        lang: 'md',
+        diff: ['@@ -0,0 +1,4 @@', '+# Run 42', '+', '+AdamW, cosine schedule, batch 128.', '+Val F1 0.941 (was 0.917).'],
+      },
+    ],
+  },
+  {
+    id: 'db-ops',
+    names: ['Upgrade Postgres to 17'],
+    repo: 'db-ops',
+    branch: 'chore/pg17',
+    busy: false,
+    finished: true,
+    agoSec: 380,
+    tree: [],
+    tab: 'git',
+    changes: [
+      {
+        path: 'postgres.tf',
+        status: 'M',
+        lang: 'tf',
+        diff: [
+          '@@ -1,8 +1,8 @@',
+          ' resource "postgres_cluster" "main" {',
+          '   name    = "orders"',
+          '-  version = "16.4"',
+          '+  version = "17.2"',
+          '   size    = "large"',
+          '-  params  = "pg16-default"',
+          '+  params  = "pg17-default"',
+          ' }',
+        ],
+      },
+    ],
+  },
+];

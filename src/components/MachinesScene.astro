@@ -1,0 +1,590 @@
+---
+import { agents, devbox, counts, totals, ago, rows, type Agent } from '../data/demo';
+import { icons } from './icons';
+
+const LAPTOP =
+  '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16"/></svg>';
+const SERVER =
+  '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="13" width="18" height="7" rx="1.5"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>';
+
+const local = ['shop-api', 'billing'].map(id => agents.find(a => a.id === id)!);
+const groups = [
+  { name: 'Local', icon: LAPTOP, remote: false, list: local, from: 1 },
+  { name: 'devbox', icon: SERVER, remote: true, list: devbox, from: local.length + 1 },
+];
+const plates = [
+  { a: local[0], machine: '', cls: 'ms-local' },
+  { a: devbox[0], machine: 'devbox', cls: 'ms-remote' },
+];
+
+const base = (p: string) => p.split('/').pop()!;
+const dir = (p: string) => p.split('/').slice(0, -1).join('/');
+const statusClass = { M: 'modified', A: 'added', U: 'untracked' } as const;
+const t = (a: Agent) => totals(a);
+
+const command = 'kijk machine add devbox';
+const saved =
+  'Saved devbox. kijk installs its own copy there when needed, and an open kijk window shows its agents within a few seconds.';
+---
+
+<figure class="mscene s1 s2 s3 s4 s5" data-mscene>
+  <figcaption class="sr-only">
+    Demo. In a terminal, <code>{command}</code> prints “Testing the login to devbox…” and then “{saved}” The kijk window
+    then shows the agents under two headers, Local and devbox, with the first devbox agent open on its changes.
+  </figcaption>
+  <div class="ms-stage" aria-hidden="true" inert>
+    <div class="kijk ms-win">
+      <div class="k-title">
+        <span class="lights"><i></i><i></i><i></i></span>
+        <span class="k-title-text" data-title>{devbox[0].repo} — kijk</span>
+      </div>
+      <div class="k-body">
+        <aside class="k-rail ms-rail">
+          <header>Agents <span class="k-count" data-count>{local.length + devbox.length}</span></header>
+          {
+            groups.map(g => (
+              <div class:list={['ms-group', { 'ms-remote-group': g.remote }]}>
+                <div class="ms-fold">
+                  <div class="ms-head">
+                    <span class="caret" set:html={icons.caret} />
+                    <span class="ms-icon">
+                      <Fragment set:html={g.icon} />
+                      {g.remote && <span class="ms-dot" />}
+                    </span>
+                    <span class="ms-name">{g.name}</span>
+                    <span class="ms-rule" />
+                    {g.remote && <span class="ms-state">connecting…</span>}
+                  </div>
+                </div>
+                <ol class="tickets">
+                  {g.list.map((a, i) => (
+                    <li class:list={['t-wrap', { busy: a.busy, finished: a.finished }]}>
+                      <span class="ticket">
+                        <span class="t-top">
+                          <span class="t-key">{g.from + i}</span>
+                          <span class="t-when">{ago(a.agoSec)}</span>
+                          <span class="t-done" />
+                        </span>
+                        <span class="t-name">{a.names.join(', ')}</span>
+                        <span class="t-where">
+                          {a.repo} · {a.branch}
+                        </span>
+                        <span class="t-foot">
+                          <Fragment set:html={icons.claude} />
+                          <span class="t-state">{a.busy ? 'Busy' : 'Idle'}</span>
+                          <span class="t-lc">
+                            <span class="lc-add">+{t(a).add}</span> <span class="lc-del">−{t(a).del}</span>
+                          </span>
+                        </span>
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            ))
+          }
+        </aside>
+
+        <div class="ms-plates">
+          {
+            plates.map(({ a, machine, cls }) => {
+              const c = a.changes[0];
+              return (
+                <section class:list={['ms-plate', cls]}>
+                  <aside class="k-side">
+                    <div class="k-side-head">
+                      <span class="k-folder">
+                        {a.repo}
+                        {machine && (
+                          <span class="ms-on">
+                            <Fragment set:html={SERVER} />
+                            {machine}
+                          </span>
+                        )}
+                      </span>
+                      <span class="k-icon" set:html={icons.search} />
+                      <div class="k-tabs">
+                        <button type="button" aria-pressed="false" set:html={icons.folder} />
+                        <button type="button" aria-pressed="true" set:html={icons.git} />
+                      </div>
+                    </div>
+                    <div class="k-git">
+                      <div class="branchbar">
+                        <Fragment set:html={icons.git} />
+                        <span class="branch">{a.branch}</span>
+                        <span class="lc">
+                          <span class="lc-add">+{t(a).add}</span>
+                          <span class="lc-del">−{t(a).del}</span>
+                        </span>
+                      </div>
+                      <div class="prline">
+                        {a.pr ? (
+                          <>
+                            <span class="pr-top">
+                              <Fragment set:html={icons[a.pr.host]} />
+                              <span class="pr-num">
+                                {a.pr.host === 'gitlab' ? '!' : '#'}
+                                {a.pr.num}
+                              </span>
+                              <span class="pr-title">{a.pr.title}</span>
+                            </span>
+                            <span class="chips">
+                              <span class:list={['chip', a.pr.checks]}>
+                                {a.pr.checks === 'pass' ? <Fragment set:html={icons.check} /> : <span class="dot" />}
+                                {a.pr.host === 'gitlab' ? 'Pipeline' : 'Checks'} {a.pr.checks === 'pass' ? 'passed' : 'running'}
+                              </span>
+                              <span class:list={['chip', { pass: a.pr.review === 'Approved' }]}>{a.pr.review}</span>
+                            </span>
+                          </>
+                        ) : (
+                          <span class="pr-none">No pull request for this branch</span>
+                        )}
+                      </div>
+                      <div class="changes">
+                        <h3>
+                          Changes <span class="n">{a.changes.length}</span>
+                        </h3>
+                        {a.changes.map((ch, i) => (
+                          <div class:list={['item', 'change', { selected: i === 0 }]}>
+                            <input type="checkbox" checked={ch.staged} />
+                            <span class:list={['letter', statusClass[ch.status]]}>{ch.status}</span>
+                            <span class:list={['name', statusClass[ch.status]]}>{base(ch.path)}</span>
+                            <span class="dir">{dir(ch.path)}</span>
+                            <span class="lc">
+                              <span class="lc-add">+{counts(ch).add}</span>
+                              <span class="lc-del">−{counts(ch).del}</span>
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      <div class="commit">
+                        <textarea rows="2" placeholder="Commit message"></textarea>
+                        <label class="check">
+                          <input type="checkbox" /> Push after commit
+                        </label>
+                        <button type="button" disabled>
+                          Commit
+                        </button>
+                      </div>
+                    </div>
+                  </aside>
+                  <div class="k-main">
+                    <div class="view">
+                      <div class="filetabs">
+                        <span class="filetab">
+                          {base(c.path)}
+                          <Fragment set:html={icons.close} />
+                        </span>
+                      </div>
+                      <div class="diffbar">
+                        <span class="path">{c.path}</span>
+                        <span class="lc">
+                          <span class="lc-add">+{counts(c).add}</span>
+                          <span class="lc-del">−{counts(c).del}</span>
+                        </span>
+                      </div>
+                      <div class="code">
+                        {rows(c).map(r =>
+                          r.kind === 'sep' ? (
+                            <div class="ln sep">
+                              <span class="gut" />
+                              <span class="tx">{r.html}</span>
+                            </div>
+                          ) : (
+                            <div class:list={['ln', r.kind]}>
+                              <span class="gut">
+                                <span>{r.old ?? ''}</span>
+                                <span>{r.new ?? ''}</span>
+                              </span>
+                              <span class="tx" set:html={r.html} />
+                            </div>
+                          ),
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              );
+            })
+          }
+        </div>
+      </div>
+      <footer class="k-status">
+        <span class="k-ver"><i class="dot"></i>kijk</span>
+      </footer>
+    </div>
+
+    <div class="ms-term">
+      <div class="ms-term-bar">
+        <span class="lights"><i></i><i></i><i></i></span>
+        <span>Terminal</span>
+      </div>
+      <div class="ms-term-body">
+        <p><span class="ms-ps">~ $</span> <span data-type={command}>{command}</span><span class="ms-caret ms-typing" /></p>
+        <p class="ms-out ms-o1">Testing the login to devbox…</p>
+        <p class="ms-out ms-o2">{saved}</p>
+        <p class="ms-out ms-o2"><span class="ms-ps">~ $</span> <span class="ms-caret" /></p>
+      </div>
+    </div>
+  </div>
+</figure>
+
+<style is:global>
+  .mscene {
+    position: relative;
+    margin: 0;
+    padding-bottom: 40px;
+    min-width: 0;
+  }
+  .ms-stage {
+    position: relative;
+  }
+  .ms-win {
+    height: 600px;
+  }
+  .ms-win .k-side {
+    display: flex;
+  }
+  .ms-win .k-tabs button {
+    cursor: default;
+  }
+  .ms-win .ticket {
+    cursor: default;
+  }
+  .ms-win .commit {
+    margin-top: auto;
+  }
+  .ms-plates {
+    display: grid;
+    min-height: 0;
+  }
+  .ms-plate {
+    grid-area: 1 / 1;
+    display: grid;
+    grid-template-columns: var(--side-w) minmax(0, 1fr);
+    min-height: 0;
+  }
+  .ms-remote {
+    visibility: hidden;
+  }
+  .s5 .ms-local {
+    visibility: hidden;
+  }
+  .s5 .ms-remote {
+    visibility: visible;
+    animation: k-plate 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .ms-on {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 7px;
+    font-weight: 400;
+    font-size: 12px;
+    color: var(--muted);
+    vertical-align: -1px;
+  }
+  .ms-on svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .ms-rail .tickets {
+    padding-bottom: 14px;
+  }
+  .ms-fold {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .ms-fold > .ms-head {
+    overflow: hidden;
+    min-height: 0;
+  }
+  .s3 .ms-fold {
+    grid-template-rows: 1fr;
+  }
+  .ms-head {
+    --mh-bg: color-mix(in srgb, var(--hairline) 70%, var(--rail-bg));
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    height: 30px;
+    margin-bottom: 10px;
+    padding: 0 12px 0 6px;
+    background: var(--mh-bg);
+    border-block: 1px solid var(--hairline);
+    font: 600 12.5px/1 var(--sans);
+  }
+  .ms-head .caret svg {
+    width: 12px;
+    height: 12px;
+    transform: rotate(90deg);
+  }
+  .ms-icon {
+    position: relative;
+    display: flex;
+  }
+  .ms-icon svg {
+    width: 15px;
+    height: 15px;
+  }
+  .ms-dot {
+    position: absolute;
+    right: -3px;
+    bottom: -2px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--ember);
+    box-shadow: 0 0 0 2px var(--mh-bg);
+    animation: k-fade 1.2s ease-in-out infinite;
+  }
+  .s4 .ms-dot {
+    background: var(--added);
+    animation: none;
+  }
+  .ms-rule {
+    flex: 1;
+  }
+  .ms-state {
+    font-weight: 400;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .s4 .ms-state {
+    display: none;
+  }
+  .ms-remote-group {
+    display: none;
+  }
+  .s3 .ms-remote-group {
+    display: block;
+  }
+  .ms-remote-group .t-wrap {
+    opacity: 0;
+    translate: 0 -14px;
+  }
+  .s4 .ms-remote-group .t-wrap {
+    opacity: 1;
+    translate: 0 0;
+    transition: opacity 0.4s, translate 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .s4 .ms-remote-group .t-wrap:nth-child(2) {
+    transition-delay: 0.15s;
+  }
+  .ms-group:first-of-type .t-wrap:first-child,
+  .s5 .ms-remote-group .t-wrap:first-child {
+    transform: translateX(14px);
+    filter: drop-shadow(0 2px 2px rgb(168 96 3 / 0.18)) drop-shadow(0 10px 18px rgb(233 160 62 / 0.38));
+  }
+  .ms-group:first-of-type .t-wrap:first-child .ticket,
+  .s5 .ms-remote-group .t-wrap:first-child .ticket {
+    background: var(--ticket-lit);
+  }
+  .s5 .ms-group:first-of-type .t-wrap:first-child {
+    transform: none;
+    filter: drop-shadow(0 1px 0 rgb(25 29 35 / 0.08)) drop-shadow(0 3px 5px rgb(25 29 35 / 0.1));
+  }
+  .s5 .ms-group:first-of-type .t-wrap:first-child .ticket {
+    background: var(--ticket);
+  }
+
+  /* The terminal sits over the lower right of the window. */
+  .ms-term {
+    position: absolute;
+    z-index: 5;
+    right: -20px;
+    bottom: -36px;
+    width: min(100%, 470px);
+    background: var(--ink);
+    color: #e3e6ea;
+    border-radius: 10px;
+    box-shadow: 0 0 0 1px rgb(255 255 255 / 0.06), 0 2px 4px rgb(25 29 35 / 0.12), 0 24px 50px -14px rgb(25 29 35 / 0.45);
+    font: 13px/1.55 var(--mono);
+    font-variation-settings: 'CASL' 0, 'MONO' 1;
+  }
+  @media (prefers-color-scheme: dark) {
+    .ms-term {
+      background: #0d0f12;
+      box-shadow: 0 0 0 1px var(--hairline), 0 24px 60px -12px rgb(0 0 0 / 0.7);
+    }
+  }
+  .ms-term-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 28px;
+    padding: 0 11px;
+    border-bottom: 1px solid rgb(255 255 255 / 0.07);
+    font: 12px/1 var(--sans);
+    color: #a0a6ae;
+  }
+  .ms-term-bar > span:last-child {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .ms-term .lights i {
+    background: rgb(255 255 255 / 0.16);
+  }
+  .ms-term-body {
+    padding: 10px 14px 12px;
+    min-height: 140px;
+  }
+  .ms-term-body p {
+    margin: 0;
+  }
+  .ms-ps {
+    color: var(--sky);
+  }
+  .ms-out {
+    display: none;
+    color: #c8ccd2;
+  }
+  .s2 .ms-o1,
+  .s3 .ms-o2 {
+    display: block;
+  }
+  .s2 .ms-o1 {
+    animation: ms-line 0.2s ease-out;
+  }
+  @keyframes ms-line {
+    from {
+      opacity: 0;
+    }
+  }
+  .ms-caret {
+    display: inline-block;
+    width: 0.55em;
+    height: 1.1em;
+    margin-left: 1px;
+    vertical-align: -0.2em;
+    background: var(--ember);
+    animation: ms-blink 1.05s steps(1) infinite;
+  }
+  .s2 .ms-typing {
+    display: none;
+  }
+  @keyframes ms-blink {
+    50% {
+      opacity: 0;
+    }
+  }
+
+  @media (max-width: 860px) {
+    .ms-plate {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .ms-win .k-main {
+      display: none;
+    }
+  }
+  @media (max-width: 720px) {
+    .mscene {
+      padding-bottom: 0;
+    }
+    .ms-win {
+      height: auto;
+    }
+    .ms-win .k-body {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .ms-win .k-rail {
+      border-right: 0;
+      border-bottom: 1px solid var(--hairline);
+    }
+    .ms-win .commit {
+      display: none;
+    }
+    .ms-term {
+      position: relative;
+      right: auto;
+      bottom: auto;
+      width: 100%;
+      margin-top: -20px;
+    }
+  }
+  @media (max-width: 640px) {
+    .ms-group:first-of-type .t-wrap:first-child,
+    .s5 .ms-remote-group .t-wrap:first-child {
+      transform: translateY(8px);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ms-fold,
+    .ms-remote-group .t-wrap,
+    .s5 .ms-remote,
+    .ms-dot,
+    .ms-caret {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+</style>
+
+<script>
+  const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
+  const STEPS = ['s1', 's2', 's3', 's4', 's5'];
+
+  // The markup ships in the final state, so the scene reads without JavaScript or with reduced motion.
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    for (const scene of document.querySelectorAll<HTMLElement>('[data-mscene]')) {
+      const typed = scene.querySelector<HTMLElement>('[data-type]')!;
+      const count = scene.querySelector<HTMLElement>('[data-count]')!;
+      const title = scene.querySelector<HTMLElement>('[data-title]')!;
+      const finalCount = count.textContent!;
+      const finalTitle = title.textContent!;
+      let playing = false;
+
+      const step = (n: number) => {
+        scene.classList.add(...STEPS.slice(0, n));
+        if (n >= 4) count.textContent = finalCount;
+        if (n >= 5) title.textContent = finalTitle;
+      };
+      const reset = () => {
+        scene.classList.remove(...STEPS);
+        typed.textContent = '';
+        count.textContent = '2';
+        title.textContent = 'shop-api — kijk';
+      };
+
+      async function play() {
+        if (playing) return;
+        playing = true;
+        reset();
+        step(1);
+        await wait(500);
+        for (const ch of typed.dataset.type!) {
+          typed.textContent += ch;
+          await wait(45 + Math.random() * 55);
+        }
+        await wait(400);
+        step(2);
+        await wait(1200);
+        step(3);
+        await wait(1400);
+        step(4);
+        await wait(1200);
+        step(5);
+        playing = false;
+      }
+
+      // Plays when well into view, and again only after the scene has left the screen completely.
+      let armed = true;
+      new IntersectionObserver(
+        ([e]) => {
+          if (!e.isIntersecting || !armed) return;
+          armed = false;
+          play();
+        },
+        { rootMargin: '0px 0px -35% 0px' },
+      ).observe(scene);
+      new IntersectionObserver(([e]) => {
+        if (!e.isIntersecting) armed = true;
+      }).observe(scene);
+
+      reset();
+    }
+  }
+</script>

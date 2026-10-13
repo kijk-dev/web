@@ -10,7 +10,7 @@ const { big = false } = Astro.props;
 <div class="order-wrap">
 <div class:list={['order', { big }]} data-install>
   <div class="order-head">
-    <span class="order-label">Order up</span>
+    <span class="order-label">Install</span>
     <div class="os" role="group" aria-label="Your system">
       <button type="button" data-os="unix">macOS and Linux</button>
       <button type="button" data-os="win">Windows</button>
@@ -21,7 +21,6 @@ const { big = false } = Astro.props;
     <code class="order-cmd" data-for="win">irm <span class="nw">https://kijk.dev/install.ps1 | iex</span></code>
   </div>
   <div class="order-foot">
-    <p class="order-note" data-for="unix">No sudo. Your shell files stay as they are.</p>
     <p class="order-note" data-for="win">In PowerShell. No administrator rights needed.</p>
     <button type="button" class="copy" data-copy>
       <span class="copy-idle"><Fragment set:html={icons.copy} />Copy</span>
@@ -165,6 +164,9 @@ const { big = false } = Astro.props;
     align-items: center;
     gap: 12px;
     padding: 10px 12px 0 16px;
+  }
+  .order-foot .copy {
+    margin-left: auto;
   }
   .order-note {
     flex: 1;

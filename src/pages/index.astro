@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 import KijkWindow from '../components/KijkWindow.astro';
 import Install from '../components/Install.astro';
 import KeysReceipt from '../components/KeysReceipt.astro';
+import MachinesScene from '../components/MachinesScene.astro';
 import { icons } from '../components/icons';
 
 const description =
@@ -20,18 +21,17 @@ const repo = 'https://github.com/kijk-dev/kijk';
     </a>
     <nav aria-label="Site">
       <a href="#rail">How it works</a>
-      <a href="#keys">Keys</a>
       <a href={repo} class="gh"><Fragment set:html={icons.github} />GitHub</a>
     </nav>
   </header>
 
   <main>
     <section class="service" aria-labelledby="hero-title">
+      <h1 id="hero-title"><span>See what agents changed.</span> <span class="hl">Anywhere.</span></h1>
       <div class="pitch">
-        <h1 id="hero-title">Your agents cook.<br />You check each plate.</h1>
         <p class="lead">
-          kijk is an agent-native code viewer. It lists the coding agents that run on your machine. Pick one to see
-          its files, its diff and its git state.
+          kijk is an agent-native code viewer. It lists the coding agents on this computer and on remote machines.
+          Pick one to see its files, its diff and its git state.
         </p>
         <Install />
         <p class="aside">Or with Go:<br /><code>go install github.com/kijk-dev/kijk@latest</code></p>
@@ -47,15 +47,15 @@ const repo = 'https://github.com/kijk-dev/kijk';
         <h2 id="rail-title">Every agent on one rail.</h2>
         <p>
           kijk finds the agents that run on your machine. You never open a project by hand. The newest work comes to
-          the top. Tickets appear, change and go as agents start, work and stop.
+          the top. Cards appear, change and go as agents start, work and stop.
         </p>
         <ul class="facts">
-          <li>Agents in the same folder share one ticket.</li>
+          <li>Agents in the same folder share one card.</li>
           <li>An agent in a git worktree gets its own.</li>
           <li><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>1</kbd> to <kbd>9</kbd> opens the first nine.</li>
         </ul>
       </div>
-      <ol class="states" aria-label="Ticket states">
+      <ol class="states" aria-label="Card states">
         <li>
           <div class="t-wrap busy">
             <div class="ticket">
@@ -87,14 +87,14 @@ const repo = 'https://github.com/kijk-dev/kijk';
               <span class="t-foot"><Fragment set:html={icons.claude} /><span class="t-state">Idle</span></span>
             </div>
           </div>
-          <p><b>Idle.</b> Nothing new. The ticket stays until the agent stops.</p>
+          <p><b>Idle.</b> Nothing new. The card stays until the agent stops.</p>
         </li>
       </ol>
     </section>
 
     <section id="review" class="course" aria-labelledby="review-title">
       <div class="words">
-        <h2 id="review-title">Check the plate.</h2>
+        <h2 id="review-title">Review every change.</h2>
         <p>
           Files open read-only, with syntax colours. The diff shows what changed, with line counts like
           <span class="lc"><span class="lc-add">+40</span> <span class="lc-del">−12</span></span>. Markdown shows
@@ -148,6 +148,23 @@ const repo = 'https://github.com/kijk-dev/kijk';
         </div>
         <figcaption>The Git tab. On a wide screen, try it on a demo agent above.</figcaption>
       </figure>
+    </section>
+
+    <section id="machines" class="course wide" aria-labelledby="machines-title">
+      <div class="words">
+        <h2 id="machines-title">Add a machine to see its agents.</h2>
+        <div>
+          <p>
+            Some agents run on a VM or a box without a screen. Add the machine once, with an alias from your SSH config
+            or <code>user@host</code>. Its agents join the same rail, under their own header.
+          </p>
+          <p>
+            Read their files and diffs. Stage, commit, push and fetch there. kijk uses your own <code>ssh</code>, keys
+            and known hosts, and copies itself to the machine when needed.
+          </p>
+        </div>
+      </div>
+      <MachinesScene />
     </section>
 
     <section id="keys" class="course" aria-labelledby="keys-title">
@@ -242,21 +259,33 @@ const repo = 'https://github.com/kijk-dev/kijk';
   .service {
     display: grid;
     grid-template-columns: minmax(300px, 370px) minmax(0, 1fr);
-    gap: clamp(28px, 3vw, 44px);
+    gap: 40px clamp(28px, 3vw, 44px);
     max-width: 1680px;
     margin: 0 auto;
-    padding: 34px 0 0 clamp(20px, 4vw, 48px);
-  }
-  .pitch {
-    padding-top: 26px;
+    padding: clamp(28px, 4vw, 56px) 0 0 clamp(20px, 4vw, 48px);
   }
   h1 {
+    grid-column: 1 / -1;
     margin: 0;
-    font-size: clamp(1.85rem, 1rem + 1.2vw, 2.15rem);
-    line-height: 1.08;
+    padding-right: clamp(20px, 4vw, 48px);
+    font-size: clamp(2.6rem, 6.4vw, 6.5rem);
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+    text-wrap: initial;
+  }
+  h1 span {
+    display: block;
+  }
+  .hl {
+    color: var(--ember-deep);
+  }
+  @media (prefers-color-scheme: dark) {
+    .hl {
+      color: var(--ember);
+    }
   }
   .lead {
-    margin: 18px 0 28px;
+    margin: 0 0 28px;
     color: var(--muted);
     max-width: 34ch;
   }
@@ -275,7 +304,7 @@ const repo = 'https://github.com/kijk-dev/kijk';
   }
   .plate-stage {
     min-width: 0;
-    height: clamp(580px, calc(100svh - 110px), 820px);
+    height: clamp(560px, calc(100svh - 120px), 800px);
   }
   .plate-stage :global(.kijk) {
     height: 100%;
@@ -400,6 +429,16 @@ const repo = 'https://github.com/kijk-dev/kijk';
     color: var(--muted);
   }
 
+  .course.wide {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+  .course.wide .words {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(32px, 6vw, 96px);
+  }
+
   .slip {
     margin: 0;
     justify-self: start;
@@ -471,15 +510,16 @@ const repo = 'https://github.com/kijk-dev/kijk';
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       gap: 0 40px;
       align-items: start;
-      padding-top: 10px;
     }
-    .pitch h1,
+    h1 {
+      padding-right: 0;
+    }
     .pitch .lead {
       grid-column: 1;
     }
     .pitch :global(.order-wrap) {
       grid-column: 2;
-      grid-row: 1 / span 2;
+      grid-row: 1 / span 3;
       align-self: start;
     }
     .pitch .aside {
@@ -491,7 +531,8 @@ const repo = 'https://github.com/kijk-dev/kijk';
     .plate-stage {
       height: clamp(520px, 72svh, 720px);
     }
-    .course {
+    .course,
+    .course.wide .words {
       grid-template-columns: minmax(0, 1fr);
     }
   }
