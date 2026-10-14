@@ -86,6 +86,12 @@ html {
   scrollbar-color: var(--edge) transparent;
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 body {
   margin: 0;
   background: var(--page);
