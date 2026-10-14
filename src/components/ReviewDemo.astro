@@ -1,0 +1,866 @@
+---
+import { icons } from './icons';
+
+type Row = [path: string, kind: string];
+const rows: Row[] = [
+  ['cmd/', 'folder'],
+  ['cmd/api/', 'folder'],
+  ['cmd/api/main.go', ''],
+  ['internal/', 'folder'],
+  ['internal/auth/', 'folder'],
+  ['internal/auth/clock.go', 'untracked'],
+  ['internal/auth/refresh.go', 'modified'],
+  ['internal/auth/refresh_test.go', 'modified'],
+  ['internal/auth/session.go', ''],
+  ['internal/billing/', 'folder'],
+  ['internal/billing/invoice.go', 'added'],
+  ['internal/billing/vat.go', ''],
+  ['internal/store/', 'folder'],
+  ['internal/store/tokens.go', ''],
+  ['migrations/', 'folder'],
+  ['migrations/0007_refresh_tokens.sql', 'added'],
+  ['vendor/', 'folder ignored'],
+  ['go.mod', ''],
+  ['README.md', ''],
+];
+const parent = (p: string) => p.replace(/[^/]+\/?$/, '');
+const depth = (p: string) => p.replace(/\/$/, '').split('/').length - 1;
+const name = (p: string) => p.replace(/\/$/, '').split('/').pop();
+const steps = { tree: 'The whole folder', goto: 'Go to file', find: 'Find in file' };
+---
+
+<figure class="rv-fig" data-rv aria-label="kijk playing three things in a loop: the whole folder, go to file, and find in file">
+  <div class="rv" aria-hidden="true">
+    <div class="rv-title"><span class="rv-dots"><i></i><i></i><i></i></span>shop-api — kijk</div>
+    <div class="rv-body">
+      <aside class="rv-side">
+        <div class="rv-head"><span>shop-api</span><Fragment set:html={icons.folder} /></div>
+        <ul class="rv-tree">
+          {
+            rows.map(([p, kind]) => (
+              <li class={kind} data-path={p} data-parent={parent(p)} style={`--d:${depth(p)}`}>
+                <span class="rv-caret">{kind.startsWith('folder') && <Fragment set:html={icons.caret} />}</span>
+                {name(p)}
+              </li>
+            ))
+          }
+        </ul>
+      </aside>
+      <div class="rv-main">
+        <div class="rv-tabs"></div>
+        <div class="rv-find">
+          <span class="rv-input"><span class="rv-q"></span><span class="rv-caretbar"></span></span>
+          <span class="rv-count"></span>
+          <span class="rv-arrows">↑ ↓</span>
+        </div>
+        <div class="rv-code"></div>
+        <div class="rv-goto">
+          <span class="rv-input"><span class="rv-q"></span><span class="rv-caretbar"></span></span>
+          <ul class="rv-list"></ul>
+          <p class="rv-note"></p>
+        </div>
+      </div>
+    </div>
+    <span class="rv-key"><kbd data-k="mac"></kbd><kbd data-k="pc"></kbd></span>
+  </div>
+  <ol class="rv-steps">
+    {
+      Object.entries(steps).map(([s, label]) => (
+        <li>
+          <button type="button" data-step={s}>
+            {label}
+            <span class="rv-bar" />
+          </button>
+        </li>
+      ))
+    }
+  </ol>
+</figure>
+
+<style is:global>
+  .rv-fig {
+    margin: 0;
+    min-width: 0;
+  }
+  .rv {
+    --rv-hit: var(--ember-deep);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 390px;
+    border-radius: 12px;
+    background: var(--win);
+    box-shadow: 0 0 0 1px var(--hairline), var(--shadow);
+    overflow: hidden;
+    font-family: var(--sans);
+    font-size: 12.5px;
+    line-height: 1.4;
+    color: var(--text);
+  }
+  .rv-title {
+    position: relative;
+    flex: none;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    font-size: 12px;
+    color: var(--muted);
+    background: var(--panel);
+    border-bottom: 1px solid var(--hairline);
+  }
+  .rv-dots {
+    position: absolute;
+    left: 12px;
+    top: 10px;
+    display: flex;
+    gap: 6px;
+  }
+  .rv-dots i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--hairline);
+  }
+  .rv-body {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr);
+  }
+  .rv-side {
+    background: var(--panel);
+    border-right: 1px solid var(--hairline);
+    overflow: hidden;
+  }
+  .rv-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 30px;
+    padding: 0 10px 0 12px;
+    font-weight: 600;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .rv-head svg.i {
+    width: 14px;
+    height: 14px;
+    color: var(--blue);
+  }
+  .rv-tree {
+    list-style: none;
+    margin: 0;
+    padding: 4px 0;
+  }
+  .rv-tree li {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 22px;
+    padding-left: calc(8px + var(--d) * 14px);
+    white-space: nowrap;
+    transition: background-color 0.25s;
+  }
+  .rv-tree li[hidden] {
+    display: none;
+  }
+  .rv-tree li.rv-in {
+    animation: rv-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--i, 0) * 45ms);
+  }
+  @keyframes rv-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+  .rv-caret {
+    display: inline-grid;
+    place-items: center;
+    width: 14px;
+    flex: none;
+  }
+  .rv-caret svg.i {
+    width: 12px;
+    height: 12px;
+    color: var(--muted);
+    transition: transform 0.2s;
+  }
+  .rv-tree li.open .rv-caret svg {
+    transform: rotate(90deg);
+  }
+  .rv-tree .modified {
+    color: var(--blue);
+  }
+  .rv-tree .added {
+    color: var(--added);
+  }
+  .rv-tree .untracked {
+    color: var(--untracked);
+  }
+  .rv-tree .ignored {
+    opacity: 0.55;
+  }
+  .rv-tree li.selected {
+    background: var(--select);
+  }
+
+  .rv-main {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .rv-tabs {
+    flex: none;
+    display: flex;
+    height: 30px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--hairline);
+  }
+  .rv-tab {
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    border-right: 1px solid var(--hairline);
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .rv-tab.modified {
+    color: color-mix(in srgb, var(--blue) 70%, var(--muted));
+  }
+  .rv-tab.on {
+    background: var(--win);
+    color: var(--blue);
+    box-shadow: inset 0 -2px var(--blue);
+  }
+  .rv-tab.rv-in {
+    animation: rv-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .rv-find {
+    flex: none;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--hairline);
+    font-size: 12px;
+  }
+  .rv.finding .rv-find {
+    display: flex;
+    animation: rv-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .rv-input {
+    display: flex;
+    align-items: center;
+    min-height: 22px;
+    padding: 0 6px;
+    border: 1px solid var(--edge);
+    border-radius: 4px;
+    background: var(--win);
+    outline: 2px solid var(--blue);
+    outline-offset: -1px;
+  }
+  .rv-find .rv-input {
+    width: min(150px, 50%);
+  }
+  .rv-caretbar {
+    width: 1px;
+    height: 14px;
+    margin-left: 1px;
+    background: var(--blue);
+    animation: rv-blink 1s steps(1) infinite;
+  }
+  @keyframes rv-blink {
+    50% {
+      opacity: 0;
+    }
+  }
+  .rv-count {
+    flex: 1;
+    color: var(--muted);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .rv-arrows {
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .rv-code {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    padding: 6px 0;
+    font-family: var(--mono);
+    font-variation-settings: 'CASL' 0, 'MONO' 1;
+    font-size: 12px;
+    line-height: 19px;
+    white-space: pre;
+    tab-size: 4;
+  }
+  .rv-code.rv-in {
+    animation: rv-fade 0.35s ease-out;
+  }
+  @keyframes rv-fade {
+    from {
+      opacity: 0;
+      filter: blur(3px);
+    }
+  }
+  .rv-empty {
+    display: grid;
+    place-items: center;
+    height: 100%;
+    color: var(--muted);
+    font-family: var(--sans);
+    white-space: normal;
+  }
+  .rv-ln {
+    display: flex;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .rv-no {
+    flex: none;
+    width: 34px;
+    padding-right: 12px;
+    text-align: right;
+    color: var(--gutter);
+  }
+  .rv-code .k {
+    color: var(--hl-keyword);
+  }
+  .rv-code .t {
+    color: var(--hl-type);
+  }
+  .rv-code .s {
+    color: var(--hl-string);
+  }
+  .rv-code .n {
+    color: var(--hl-number);
+  }
+  .rv-code .c {
+    color: var(--hl-comment);
+  }
+  .rv-code .f {
+    color: var(--hl-function);
+  }
+  .rv-code .hit {
+    box-shadow: inset 0 -2px var(--rv-hit);
+  }
+  .rv-code .cur {
+    outline: 2px solid var(--rv-hit);
+    outline-offset: -1px;
+    border-radius: 2px;
+    box-shadow: none;
+  }
+
+  .rv-goto {
+    position: absolute;
+    top: 22px;
+    left: 50%;
+    width: min(380px, calc(100% - 24px));
+    padding: 8px 0 6px;
+    border: 1px solid var(--hairline);
+    border-radius: 6px;
+    background: var(--panel);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.18);
+    transform: translateX(-50%) translateY(-6px);
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity 0.2s,
+      transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+      visibility 0s 0.25s;
+  }
+  .rv.going .rv-goto {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%);
+    transition:
+      opacity 0.2s,
+      transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .rv-goto .rv-input {
+    margin: 0 8px 6px;
+    min-height: 26px;
+    font-size: 13px;
+  }
+  .rv-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .rv-list li {
+    display: flex;
+    gap: 8px;
+    height: 22px;
+    line-height: 22px;
+    padding: 0 12px;
+    white-space: nowrap;
+  }
+  .rv-list li.on {
+    background: var(--select);
+  }
+  .rv-list b {
+    color: var(--blue);
+  }
+  .rv-list .dir {
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .rv-note {
+    margin: 4px 12px 2px;
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+  .rv-note:empty {
+    display: none;
+  }
+
+  .rv-key {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+    transition:
+      opacity 0.2s,
+      transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .rv-key.show {
+    opacity: 1;
+    transform: none;
+  }
+  .rv-key kbd {
+    display: block;
+    padding: 5px 10px;
+    border-radius: 6px;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--mono);
+    font-variation-settings: 'CASL' 0, 'MONO' 1;
+    font-size: 13px;
+    font-weight: 700;
+    box-shadow: 0 6px 16px -6px rgb(25 29 35 / 0.5);
+  }
+  @media (prefers-color-scheme: dark) {
+    .rv {
+      --rv-hit: var(--ember);
+    }
+    .rv-key kbd {
+      background: var(--paper);
+      color: var(--ink);
+    }
+  }
+
+  .rv-steps {
+    list-style: none;
+    margin: 16px 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .rv-steps button {
+    display: block;
+    width: 100%;
+    padding: 0 0 8px;
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    position: relative;
+  }
+  .rv-steps button:hover,
+  .rv-steps button[aria-current='true'] {
+    color: var(--text);
+  }
+  .rv-steps button:focus-visible {
+    outline: 2px solid var(--ember);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+  .rv-bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: var(--hairline);
+    overflow: hidden;
+  }
+  .rv-bar::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--blue);
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  [aria-current='true'] .rv-bar::after {
+    animation: rv-fill var(--dur, 5s) linear forwards;
+  }
+  @keyframes rv-fill {
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  @media (max-width: 720px) {
+    .rv-body {
+      grid-template-columns: 150px minmax(0, 1fr);
+    }
+    .rv-code {
+      font-size: 11px;
+    }
+    .rv-steps {
+      gap: 10px;
+    }
+    .rv-steps button {
+      font-size: 13px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .rv *,
+    .rv-steps * {
+      animation: none !important;
+      transition: none !important;
+    }
+    [aria-current='true'] .rv-bar::after {
+      transform: none;
+    }
+  }
+</style>
+
+<script>
+  const FILES: Record<string, string[]> = {
+    'internal/auth/refresh.go': [
+      'package auth',
+      '',
+      '// Refresher renews the token before it expires.',
+      'type Refresher struct {',
+      '\tstore  TokenStore',
+      '\tevery  time.Duration',
+      '\tmargin time.Duration',
+      '}',
+      '',
+      'func (r *Refresher) Run(ctx context.Context) error {',
+      '\tticker := time.NewTicker(r.every)',
+      '\tdefer ticker.Stop()',
+      '\tfor {',
+      '\t\tselect {',
+      '\t\tcase <-ctx.Done():',
+      '\t\t\treturn ctx.Err()',
+      '\t\tcase <-ticker.C:',
+      '\t\t\tif err := r.refreshIfDue(ctx); err != nil {',
+      '\t\t\t\tr.log.Warn("token refresh failed", "err", err)',
+      '\t\t\t}',
+      '\t\t}',
+      '\t}',
+      '}',
+    ],
+    'internal/auth/refresh_test.go': [
+      'package auth',
+      '',
+      'func TestRefreshBeforeExpiry(t *testing.T) {',
+      '\tstore := newFakeStore(token("a", in(30*time.Second)))',
+      '\tr := &Refresher{store: store, margin: time.Minute}',
+      '\tif err := r.refreshIfDue(ctx); err != nil {',
+      '\t\tt.Fatal(err)',
+      '\t}',
+      '\tif store.token().ID == "a" {',
+      '\t\tt.Errorf("token was not renewed")',
+      '\t}',
+      '}',
+      '',
+      'func TestKeepFreshToken(t *testing.T) {',
+      '\tstore := newFakeStore(token("b", in(time.Hour)))',
+      '\tr := &Refresher{store: store, margin: time.Minute}',
+      '\tif err := r.refreshIfDue(ctx); err != nil {',
+      '\t\tt.Fatal(err)',
+      '\t}',
+      '\tif store.token().ID != "b" {',
+      '\t\tt.Errorf("fresh token was renewed")',
+      '\t}',
+      '}',
+    ],
+  };
+  const KEYS = {
+    goto: ['⇧⌘O', 'Ctrl+Shift+N'],
+    find: ['⌘F', 'Ctrl+F'],
+    next: ['⌘G', 'F3'],
+    enter: ['↵', 'Enter'],
+  };
+  const RECENT = ['internal/auth/refresh.go', 'README.md'];
+  const DUR = { tree: 5550, goto: 5800, find: 6800 };
+
+  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+  // hl colours one Go line and wraps find hits; marks are [start, end, current].
+  function hl(line: string, marks: [number, number, boolean][] = []) {
+    const cls: string[] = new Array(line.length).fill('');
+    const paint = (re: RegExp, c: string, group = 0) => {
+      for (const m of line.matchAll(re)) {
+        const at = m.index! + (group ? m[0].indexOf(m[group]) : 0);
+        for (let i = at; i < at + m[group].length; i++) cls[i] = c;
+      }
+    };
+    paint(/\b[A-Z]\w*/g, 't');
+    paint(/\b(\w+)\(/g, 'f', 1);
+    paint(/\b\d+\b/g, 'n');
+    paint(/\b(package|import|type|struct|func|return|if|for|select|case|defer|nil|var|range)\b/g, 'k');
+    paint(/"[^"]*"/g, 's');
+    paint(/\/\/.*$/g, 'c');
+    const mark: string[] = new Array(line.length).fill('');
+    for (const [a, b, cur] of marks) for (let i = a; i < b; i++) mark[i] = cur ? 'hit cur' : 'hit';
+    let out = '';
+    let i = 0;
+    while (i < line.length) {
+      let j = i;
+      while (j < line.length && cls[j] === cls[i] && mark[j] === mark[i]) j++;
+      const text = esc(line.slice(i, j));
+      const c = [cls[i], mark[i]].filter(Boolean).join(' ');
+      out += c ? `<span class="${c}">${text}</span>` : text;
+      i = j;
+    }
+    return out;
+  }
+
+  // fuzzy finds the letters of q, in order, in the file name; returns their indices or null.
+  function fuzzy(q: string, name: string) {
+    const at: number[] = [];
+    let i = 0;
+    for (const ch of q) {
+      i = name.toLowerCase().indexOf(ch, i);
+      if (i < 0) return null;
+      at.push(i++);
+    }
+    return at;
+  }
+
+  class Stop extends Error {}
+
+  for (const fig of document.querySelectorAll<HTMLElement>('[data-rv]')) {
+    const win = fig.querySelector<HTMLElement>('.rv')!;
+    const rows = [...fig.querySelectorAll<HTMLElement>('.rv-tree li')];
+    const tabsEl = fig.querySelector<HTMLElement>('.rv-tabs')!;
+    const code = fig.querySelector<HTMLElement>('.rv-code')!;
+    const findQ = fig.querySelector<HTMLElement>('.rv-find .rv-q')!;
+    const count = fig.querySelector<HTMLElement>('.rv-count')!;
+    const gotoQ = fig.querySelector<HTMLElement>('.rv-goto .rv-q')!;
+    const list = fig.querySelector<HTMLElement>('.rv-list')!;
+    const note = fig.querySelector<HTMLElement>('.rv-note')!;
+    const key = fig.querySelector<HTMLElement>('.rv-key')!;
+    const steps = [...fig.querySelectorAll<HTMLButtonElement>('[data-step]')];
+    const scenes = ['tree', 'goto', 'find'] as const;
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const files = rows.filter(r => !r.dataset.path!.endsWith('/')).map(r => r.dataset.path!);
+
+    let open = new Set<string>();
+    let tabs: string[] = [];
+    let active = '';
+    let token = 0;
+
+    const sleep = (ms: number, t: number) =>
+      new Promise<void>((ok, no) => setTimeout(() => (t === token ? ok() : no(new Stop())), still ? 0 : ms));
+
+    function drawTree(fresh: string[] = []) {
+      let n = 0;
+      for (const r of rows) {
+        const p = r.dataset.path!;
+        let up = r.dataset.parent!;
+        let shown = true;
+        while (up) {
+          if (!open.has(up)) shown = false;
+          up = up.replace(/[^/]+\/$/, '');
+        }
+        r.hidden = !shown;
+        r.classList.toggle('open', open.has(p));
+        r.classList.toggle('selected', p === active);
+        const isNew = shown && fresh.some(f => r.dataset.parent === f);
+        r.classList.toggle('rv-in', isNew);
+        if (isNew) r.style.setProperty('--i', String(n++));
+      }
+    }
+    function drawTabs(fresh = '') {
+      tabsEl.innerHTML = tabs
+        .map(t => {
+          const row = rows.find(r => r.dataset.path === t);
+          const c = ['rv-tab', t === active && 'on', row?.classList.contains('modified') && 'modified', t === fresh && 'rv-in'];
+          return `<span class="${c.filter(Boolean).join(' ')}">${t.split('/').pop()}</span>`;
+        })
+        .join('');
+    }
+    function drawCode(marks: [number, number, number][] = [], cur = -1, fade = false) {
+      const lines = FILES[active];
+      if (!lines) {
+        code.innerHTML = '<div class="rv-empty">Pick a file in the tree.</div>';
+        return;
+      }
+      code.innerHTML = lines
+        .map((l, i) => {
+          const m = marks.map((x, k) => [x, k] as const).filter(([x]) => x[0] === i);
+          const html = hl(l, m.map(([x, k]) => [x[1], x[2], k === cur]));
+          return `<div class="rv-ln"><span class="rv-no">${i + 1}</span><span>${html}</span></div>`;
+        })
+        .join('');
+      code.classList.remove('rv-in');
+      if (fade) {
+        void code.offsetWidth;
+        code.classList.add('rv-in');
+      }
+    }
+    function scrollTo(line: number) {
+      const shift = Math.max(0, line - 8) * 19;
+      code.querySelectorAll<HTMLElement>('.rv-ln').forEach(l => (l.style.transform = `translateY(-${shift}px)`));
+    }
+    function openFile(p: string) {
+      const fresh = tabs.includes(p) ? '' : p;
+      if (fresh) tabs.push(p);
+      active = p;
+      drawTree();
+      drawTabs(fresh);
+      drawCode([], -1, true);
+    }
+    async function press(k: keyof typeof KEYS, t: number) {
+      const [mac, pc] = KEYS[k];
+      key.querySelector('[data-k="mac"]')!.textContent = mac;
+      key.querySelector('[data-k="pc"]')!.textContent = pc;
+      key.classList.add('show');
+      await sleep(650, t);
+      key.classList.remove('show');
+    }
+    function drawGoto(q: string) {
+      gotoQ.textContent = q;
+      const found = q
+        ? files
+            .map(p => ({ p, at: fuzzy(q, p.split('/').pop()!) }))
+            .filter(x => x.at)
+            .sort((a, b) => a.p.split('/').pop()!.length - b.p.split('/').pop()!.length)
+        : RECENT.map(p => ({ p, at: [] as number[] }));
+      list.innerHTML = found
+        .slice(0, 6)
+        .map(({ p, at }, i) => {
+          const name = p.split('/').pop()!;
+          const dir = p.split('/').slice(0, -1).join('/');
+          const n = [...name].map((ch, k) => (at!.includes(k) ? `<b>${esc(ch)}</b>` : esc(ch))).join('');
+          return `<li class="${i === 0 ? 'on' : ''}"><span>${n}</span><span class="dir">${dir}</span></li>`;
+        })
+        .join('');
+      note.textContent = q ? '' : 'Type part of a file name, like usrsvc for UserService.';
+    }
+
+    function base(scene: string) {
+      win.classList.remove('finding', 'going');
+      key.classList.remove('show');
+      findQ.textContent = '';
+      count.textContent = '';
+      if (scene === 'tree') {
+        open = new Set();
+        tabs = [];
+        active = '';
+      } else {
+        open = new Set(['internal/', 'internal/auth/', 'internal/billing/']);
+        tabs = ['internal/auth/refresh.go'];
+        active = tabs[0];
+        if (scene === 'find') {
+          tabs.push('internal/auth/refresh_test.go');
+          active = tabs[1];
+        }
+      }
+      drawTree();
+      drawTabs();
+      drawCode();
+    }
+
+    const play: Record<string, (t: number) => Promise<void>> = {
+      async tree(t) {
+        for (const f of ['internal/', 'internal/auth/', 'internal/billing/', 'migrations/']) {
+          await sleep(f === 'internal/' ? 500 : 750, t);
+          open.add(f);
+          drawTree([f]);
+        }
+        await sleep(800, t);
+        openFile('internal/auth/refresh.go');
+        await sleep(2000, t);
+      },
+      async goto(t) {
+        await sleep(500, t);
+        await press('goto', t);
+        drawGoto('');
+        win.classList.add('going');
+        await sleep(700, t);
+        let q = '';
+        for (const ch of 'rftest') {
+          q += ch;
+          drawGoto(q);
+          await sleep(170, t);
+        }
+        await sleep(700, t);
+        await press('enter', t);
+        win.classList.remove('going');
+        openFile('internal/auth/refresh_test.go');
+        await sleep(1600, t);
+      },
+      async find(t) {
+        await sleep(500, t);
+        await press('find', t);
+        win.classList.add('finding');
+        let q = '';
+        for (const ch of 'token') {
+          q += ch;
+          findQ.textContent = q;
+          await sleep(150, t);
+        }
+        const marks: [number, number, number][] = [];
+        FILES[active].forEach((l, i) => {
+          for (const m of l.matchAll(/token/gi)) marks.push([i, m.index!, m.index! + 5]);
+        });
+        for (let cur = 0; cur < 3; cur++) {
+          if (cur) await press('next', t);
+          count.textContent = `${cur + 1} of ${marks.length}`;
+          drawCode(marks, cur);
+          scrollTo(marks[cur][0]);
+          await sleep(cur ? 900 : 1200, t);
+        }
+        await sleep(600, t);
+      },
+    };
+
+    let at = 0;
+    let visible = false;
+    async function run(i: number) {
+      const t = ++token;
+      at = i;
+      const s = scenes[i];
+      steps.forEach(b => {
+        b.setAttribute('aria-current', String(b.dataset.step === s));
+        b.style.setProperty('--dur', `${DUR[s]}ms`);
+      });
+      base(s);
+      try {
+        await play[s](t);
+        if (!still) run((i + 1) % scenes.length);
+      } catch (e) {
+        if (!(e instanceof Stop)) throw e;
+      }
+    }
+
+    steps.forEach((b, i) => b.addEventListener('click', () => run(i)));
+
+    base(scenes[0]);
+    new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting && !visible) run(at);
+        if (!e.isIntersecting) token++;
+        visible = e.isIntersecting;
+      },
+      { threshold: 0.4 },
+    ).observe(fig);
+  }
+</script>
