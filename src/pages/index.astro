@@ -21,7 +21,7 @@ const repo = 'https://github.com/kijk-dev/kijk';
     </a>
     <nav aria-label="Site">
       <a href="#rail">How it works</a>
-      <a href={repo} class="gh"><Fragment set:html={icons.github} />GitHub</a>
+      <a href={repo} target="_blank" rel="noopener" class="gh"><Fragment set:html={icons.github} />GitHub</a>
     </nav>
   </header>
 
@@ -205,7 +205,7 @@ const repo = 'https://github.com/kijk-dev/kijk';
       <p>Then run <code>kijk</code>, and your agents are on the rail.</p>
       <div class="close-ticket"><Install big /></div>
       <p class="close-links">
-        <a href={repo}>Source and docs on GitHub</a>
+        <a href={repo} target="_blank" rel="noopener">Source and docs on GitHub</a>
       </p>
     </section>
   </main>
@@ -213,7 +213,7 @@ const repo = 'https://github.com/kijk-dev/kijk';
   <footer class="foot">
     <span>kijk is Dutch for “look”.</span>
     <span>MIT licensed.</span>
-    <a href={repo}>GitHub</a>
+    <a href={repo} target="_blank" rel="noopener">GitHub</a>
   </footer>
 </Base>
 
