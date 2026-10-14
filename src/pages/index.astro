@@ -5,6 +5,7 @@ import Install from '../components/Install.astro';
 import KeysReceipt from '../components/KeysReceipt.astro';
 import MachinesScene from '../components/MachinesScene.astro';
 import BranchGraph from '../components/BranchGraph.astro';
+import ReviewDemo from '../components/ReviewDemo.astro';
 import { icons } from '../components/icons';
 
 const description =
@@ -102,14 +103,12 @@ const repo = 'https://github.com/kijk-dev/kijk';
           rendered, with a bar beside each changed block.
         </p>
         <p>When an agent writes to the open file, kijk reloads it and keeps your place.</p>
+        <ul class="facts">
+          <li>Big files scroll smoothly. kijk draws only the lines on the screen.</li>
+          <li>One click previews a file in a tab. A double click keeps it open.</li>
+        </ul>
       </div>
-      <dl class="menu">
-        <div><dt>The whole folder</dt><dd>The full tree, not only the changed files, coloured by git status.</dd></div>
-        <div><dt>Go to file</dt><dd>Fuzzy search over the folder, plus your recent files.</dd></div>
-        <div><dt>Find in file</dt><dd>Matches, go to line, and the next or previous change.</dd></div>
-        <div><dt>Big files</dt><dd>Scroll smoothly. kijk draws only the lines on the screen.</dd></div>
-        <div><dt>Tabs</dt><dd>One click previews a file. A double click keeps it open.</dd></div>
-      </dl>
+      <ReviewDemo />
     </section>
 
     <section id="branch" class="course" aria-labelledby="branch-title">
