@@ -1,5 +1,5 @@
 ---
-import { agents, devbox, counts, totals, ago, rows, type Agent } from '../data/demo';
+import { agents, devbox, counts, totals, ago, rows, marks, type Agent } from '../data/demo';
 import { icons } from './icons';
 
 const LAPTOP =
@@ -70,7 +70,7 @@ const saved =
                           {a.repo} · {a.branch}
                         </span>
                         <span class="t-foot">
-                          <Fragment set:html={icons.claude} />
+                          <Fragment set:html={marks(a)} />
                           <span class="t-state">{a.busy ? 'Busy' : 'Idle'}</span>
                           <span class="t-lc">
                             <span class="lc-add">+{t(a).add}</span> <span class="lc-del">−{t(a).del}</span>

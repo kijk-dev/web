@@ -1,3 +1,5 @@
+import { agentMark, type AgentType } from '../components/icons';
+
 export type Status = 'M' | 'A' | 'U';
 export type Lang = 'go' | 'ts' | 'py' | 'tf' | 'md';
 
@@ -17,6 +19,10 @@ export interface Change {
 export interface Agent {
   id: string;
   names: string[];
+  // The agent type of each name; Claude Code when left out.
+  types?: AgentType[];
+  // In a folder shared by two agent types, the one that works.
+  working?: AgentType;
   repo: string;
   branch: string;
   busy: boolean;
@@ -34,6 +40,8 @@ export const agents: Agent[] = [
   {
     id: 'docs',
     names: ['Rewrite the install guide', 'Fix broken links'],
+    types: ['claude', 'codex'],
+    working: 'codex',
     repo: 'docs',
     branch: 'docs/install-guide',
     busy: true,
@@ -94,6 +102,7 @@ export const agents: Agent[] = [
   {
     id: 'search',
     names: ['Speed up search ranking'],
+    types: ['codex'],
     repo: 'search-perf-rank',
     branch: 'perf/rank',
     busy: true,
@@ -370,6 +379,7 @@ export const agents: Agent[] = [
   {
     id: 'mobile',
     names: ['Quiet hours for push'],
+    types: ['codex'],
     repo: 'mobile-app',
     branch: 'feat/push',
     busy: false,
@@ -598,6 +608,7 @@ export const devbox: Agent[] = [
   {
     id: 'db-ops',
     names: ['Upgrade Postgres to 17'],
+    types: ['codex'],
     repo: 'db-ops',
     branch: 'chore/pg17',
     busy: false,
@@ -625,3 +636,9 @@ export const devbox: Agent[] = [
     ],
   },
 ];
+
+// marks draws one mark per agent type in the folder, in the order the agents came.
+export function marks(a: Agent) {
+  const types = [...new Set(a.types ?? ['claude' as AgentType])];
+  return types.map(t => agentMark(t, !a.working || a.working === t)).join('');
+}

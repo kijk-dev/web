@@ -28,7 +28,7 @@ The home page shows a working copy of the kijk window (`src/components/KijkWindo
 ## Style
 
 - Call kijk an "agent-native code viewer" and say "agents".
-- Claude Code is supported today. Codex and Pi are planned.
+- Claude Code and Codex (0.157 or newer) are supported. Pi is planned.
 - Keep every claim in line with the kijk README. Leave out "no telemetry", "listens only on 127.0.0.1" and lists of missing features: these are planned to change.
 - Use Recursive for all text: Casual 800 for headlines, Linear for text, Mono for code.
 - Use the brand colors: Ink `#191d23`, Paper `#f5f7f9`, Glass Blue `#1e66ca`, Sky Blue `#74a6ef`, Ember `#e9a03e`, Ember Deep `#a86003`.
