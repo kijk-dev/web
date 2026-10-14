@@ -4,6 +4,7 @@ import KijkWindow from '../components/KijkWindow.astro';
 import Install from '../components/Install.astro';
 import KeysReceipt from '../components/KeysReceipt.astro';
 import MachinesScene from '../components/MachinesScene.astro';
+import BranchGraph from '../components/BranchGraph.astro';
 import { icons } from '../components/icons';
 
 const description =
@@ -109,6 +110,34 @@ const repo = 'https://github.com/kijk-dev/kijk';
         <div><dt>Big files</dt><dd>Scroll smoothly. kijk draws only the lines on the screen.</dd></div>
         <div><dt>Tabs</dt><dd>One click previews a file. A double click keeps it open.</dd></div>
       </dl>
+    </section>
+
+    <section id="branch" class="course" aria-labelledby="branch-title">
+      <div class="words">
+        <h2 id="branch-title">Know where the branch stands.</h2>
+        <p>
+          The branch graph puts the agent's branch next to main and the pull request target, from the commit where they
+          split.
+        </p>
+        <p>See what the agent committed, what is not pushed yet, and whether main moved on.</p>
+        <ul class="facts">
+          <li>
+            <span class="sw sw-cur"></span> this branch, <span class="sw sw-main"></span> main. A pull request to another
+            branch adds its own line.
+          </li>
+          <li>Click a commit to see the files it changed.</li>
+        </ul>
+      </div>
+      <figure class="gslip" aria-label="The branch graph in the Git tab of kijk">
+        <div class="kijk gslip-win">
+          <div class="branchbar">
+            <Fragment set:html={icons.git} /><span class="branch">feat/vat</span>
+            <span class="pill">↑1</span><span class="tool" aria-hidden="true">Push</span>
+          </div>
+          <BranchGraph note={{ h1: 'Not pushed yet', m1: 'main moved on', f: 'They split here' }} />
+        </div>
+        <figcaption>The branch graph, in the Git tab. Click a commit to see its files.</figcaption>
+      </figure>
     </section>
 
     <section id="ship" class="course" aria-labelledby="ship-title">
@@ -437,6 +466,40 @@ const repo = 'https://github.com/kijk-dev/kijk';
     display: grid;
     grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
     gap: clamp(32px, 6vw, 96px);
+  }
+
+  .sw {
+    display: inline-block;
+    width: 14px;
+    height: 3px;
+    border-radius: 2px;
+    vertical-align: middle;
+    margin: 0 2px 2px 0;
+  }
+  .sw-cur {
+    background: var(--blue);
+  }
+  .sw-main {
+    background: var(--lane-main);
+  }
+
+  .gslip {
+    margin: 0;
+    width: min(100%, 400px);
+  }
+  .gslip-win {
+    display: block;
+    overflow: visible;
+    padding-bottom: 6px;
+  }
+  .gslip-win .branchbar {
+    border-radius: 12px 12px 0 0;
+    background: var(--panel);
+  }
+  .gslip figcaption {
+    margin-top: 14px;
+    font-size: 14px;
+    color: var(--muted);
   }
 
   .slip {

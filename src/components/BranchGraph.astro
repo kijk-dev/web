@@ -1,0 +1,325 @@
+---
+// Draws git's text graph the way the kijk app does (web/git.js): each character is a stroke in its cell.
+import { graph } from '../data/graph';
+
+interface Props {
+  note?: Record<string, string>; // commit hash → note beside its row
+}
+const { note = {} } = Astro.props;
+
+const CW = 7;
+const RH = 22;
+const JOIN = 10;
+const cx = (c: number) => c * CW + CW / 2;
+const fromAbove = (up: string, c: number) => '|*'.includes(up[c] || ' ') || up[c + 1] === '/' || up[c - 1] === '\\';
+const toBelow = (down: string, c: number) => '|*'.includes(down[c] || ' ') || down[c - 1] === '/' || down[c + 1] === '\\';
+const LANE = ['lane-cur', 'lane-target', 'lane-main'];
+
+// A commit starts its branch's colour below it; a line keeps the colour it came down with.
+const rows = graph.rows.map(r => ({ ...r, cls: [] as any[], down: [] as string[] }));
+let cols: string[] = [];
+for (const r of rows) {
+  const g = r.g,
+    next = [...cols];
+  r.cls = [...g].map((ch, c) => {
+    if (ch === '*') return [cols[c], (next[c] = LANE[r.l || 0])];
+    if (ch === '/') {
+      if (!'|*'.includes(g[c - 1] || ' ')) next[c - 1] = cols[c + 1];
+      return cols[c + 1];
+    }
+    if (ch === '\\') {
+      if (!'|*'.includes(g[c + 1] || ' ')) next[c + 1] = cols[c - 1];
+      return cols[c - 1];
+    }
+    return ch === '|' ? cols[c] : cols[c - 1];
+  });
+  r.down = next;
+  cols = next;
+}
+const width = Math.max(...rows.map(r => r.g.length)) * CW;
+
+const svg = (h: number, paths: Record<string, string>, dot = '') =>
+  `<svg width="${width}" height="${h}" aria-hidden="true">${Object.entries(paths)
+    .map(([cls, p]) => `<path class="${cls}" d="${p}"/>`)
+    .join('')}${dot}</svg>`;
+
+function cell(i: number, head = false) {
+  const r = rows[i],
+    up = rows[i - 1]?.g || '',
+    down = rows[i + 1]?.g || '';
+  const h = r.c ? RH : JOIN;
+  const paths: Record<string, string> = {};
+  let dot = '';
+  const line = (cls = '', x1: number, y1: number, x2: number, y2: number) => {
+    paths[cls] = `${paths[cls] || ''}M${x1} ${y1}L${x2} ${y2}`;
+  };
+  [...r.g].forEach((ch, c) => {
+    const cls = r.cls[c];
+    if (ch === '|') line(cls, cx(c), 0, cx(c), h);
+    else if (ch === '/') line(cls, cx(c + 1), 0, cx(c - 1), h);
+    else if (ch === '\\') line(cls, cx(c - 1), 0, cx(c + 1), h);
+    else if (ch === '*') {
+      if (fromAbove(up, c)) line(cls[0], cx(c), 0, cx(c), h / 2);
+      if (toBelow(down, c)) line(cls[1], cx(c), h / 2, cx(c), h);
+      dot = `<circle cx="${cx(c)}" cy="${h / 2}" r="3.5" class="${cls[1]}${head ? ' head' : ''}"/>`;
+    }
+  });
+  return svg(h, paths, dot);
+}
+
+// lanes continues the lanes of commit row i past the file rows opened under it.
+function lanes(i: number) {
+  const r = rows[i],
+    down = rows[i + 1]?.g || '';
+  const paths: Record<string, string> = {};
+  [...r.g].forEach((ch, c) => {
+    if (ch !== '|' && !(ch === '*' && toBelow(down, c))) return;
+    const cls = r.down[c] || '';
+    paths[cls] = `${paths[cls] || ''}M${cx(c)} 0L${cx(c)} ${RH}`;
+  });
+  return svg(RH, paths);
+}
+
+const BRANCH_ICON =
+  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3v12"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>';
+const statusClass = { M: 'modified', A: 'added', U: 'untracked' } as const;
+const base = (p: string) => p.split('/').pop();
+const dir = (p: string) => p.split('/').slice(0, -1).join('/');
+---
+
+<div class="bgraph">
+  <span class="bg-title"><span class="chev">›</span>Branch graph</span>
+  <ul class="commits">
+    {
+      rows.map((r, i) => {
+        if (!r.c) return <li><span class="graph" set:html={cell(i)} /></li>;
+        const c = r.c;
+        const head = !!c.refs?.some(x => x.startsWith('HEAD'));
+        const fork = c.hash === graph.fork && !c.refs;
+        return (
+          <li>
+            <div
+              class:list={['item bg-commit', { head }]}
+              role="button"
+              tabindex={i === 0 ? 0 : -1}
+              aria-expanded={c.hash === graph.open ? 'true' : 'false'}
+            >
+              <span class="graph" set:html={cell(i, head)} />
+              {(c.refs || []).map(ref => {
+                const isHead = ref.startsWith('HEAD -> ');
+                return (
+                  <span class:list={['ref', isHead ? 'head' : LANE[r.l || 0]]}>
+                    <Fragment set:html={BRANCH_ICON} />
+                    {isHead ? ref.slice(8) : ref}
+                  </span>
+                );
+              })}
+              {fork && <span class="ref fork">split</span>}
+              <span class="name">{c.subject}</span>
+              <span class="dir">{c.ago}</span>
+              {note[c.hash] && <span class="bg-note">{note[c.hash]}</span>}
+            </div>
+            {c.files && (
+              <ul hidden={c.hash !== graph.open}>
+                {c.files.map(f => (
+                  <li class="item change sub">
+                    <span class="graph" set:html={lanes(i)} />
+                    <span class:list={['letter', statusClass[f.s]]}>{f.s}</span>
+                    <span class:list={['name', statusClass[f.s]]}>{base(f.path)}</span>
+                    <span class="dir">{dir(f.path)}</span>
+                    <span class="lc">
+                      <span class="lc-add">+{f.add}</span>
+                      <span class="lc-del">−{f.del}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </li>
+        );
+      })
+    }
+  </ul>
+</div>
+
+<script>
+  // Like the app: a click on a commit opens or folds its files; the graph is one Tab stop and ↑/↓ walk the commits.
+  for (const g of document.querySelectorAll<HTMLElement>('.bgraph .commits')) {
+    const rows = [...g.querySelectorAll<HTMLElement>('.bg-commit')];
+    const toggle = (row: HTMLElement) => {
+      const files = row.nextElementSibling as HTMLElement | null;
+      if (!files) return;
+      const on = files.hidden;
+      files.hidden = !on;
+      row.setAttribute('aria-expanded', String(on));
+    };
+    rows.forEach((row, i) => {
+      row.addEventListener('click', () => toggle(row));
+      row.addEventListener('keydown', e => {
+        const to = { ArrowDown: i + 1, ArrowUp: i - 1 }[e.key];
+        if (to !== undefined && rows[to]) {
+          row.tabIndex = -1;
+          rows[to].tabIndex = 0;
+          rows[to].focus();
+        } else if (e.key === 'Enter' || e.key === ' ') {
+          toggle(row);
+        } else return;
+        e.preventDefault();
+      });
+    });
+  }
+</script>
+
+<style is:global>
+  .bgraph {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  .bg-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 8px 12px 4px;
+  }
+  .bg-title .chev {
+    display: inline-block;
+    width: 10px;
+    transform: rotate(90deg);
+  }
+  .bgraph ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .bgraph .item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 22px;
+    padding: 0 10px 0 12px;
+    white-space: nowrap;
+    cursor: default;
+  }
+  .bg-commit {
+    cursor: pointer;
+  }
+  .bg-commit.head,
+  .bg-commit:hover {
+    background: color-mix(in srgb, var(--select) 55%, transparent);
+  }
+  .bg-commit:focus-visible {
+    outline-offset: -2px;
+  }
+  .bgraph .item.sub .graph {
+    margin-right: 10px;
+  }
+  .bgraph .commits > li > .graph {
+    padding-left: 12px;
+  }
+  .bgraph .graph {
+    flex: none;
+    display: flex;
+  }
+  .bgraph .graph svg {
+    stroke: var(--muted);
+    stroke-width: 1.5;
+    fill: none;
+    overflow: visible;
+  }
+  .bgraph .graph circle {
+    fill: var(--win);
+    stroke: var(--blue);
+  }
+  .bgraph .graph .lane-cur {
+    stroke: var(--blue);
+  }
+  .bgraph .graph .lane-target {
+    stroke: var(--lane-target);
+  }
+  .bgraph .graph .lane-main {
+    stroke: var(--lane-main);
+  }
+  .bgraph .graph circle.head {
+    fill: var(--blue);
+  }
+  .bgraph .ref {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+    line-height: 15px;
+    padding: 0 5px;
+    border-radius: 8px;
+    background: var(--select);
+    color: var(--blue);
+  }
+  .bgraph .ref svg {
+    width: 10px;
+    height: 10px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+  }
+  .bgraph .ref.head {
+    background: var(--blue-fill);
+    color: #fff;
+  }
+  .bgraph .ref.lane-target {
+    color: var(--lane-target);
+    background: color-mix(in srgb, var(--lane-target) 16%, transparent);
+  }
+  .bgraph .ref.lane-main {
+    color: var(--lane-main);
+    background: color-mix(in srgb, var(--lane-main) 16%, transparent);
+  }
+  .bgraph .ref.fork {
+    background: none;
+    border: 1px dashed var(--hairline);
+    color: var(--muted);
+  }
+  .bgraph .name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .bgraph .dir {
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .bg-commit .dir {
+    margin-left: auto;
+  }
+  .bgraph .change .dir {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .bg-note {
+    position: absolute;
+    left: calc(100% + 18px);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-variation-settings: 'MONO' 1;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .bg-note::before {
+    content: '';
+    width: 22px;
+    border-top: 1px dashed var(--edge);
+  }
+  @media (max-width: 720px) {
+    .bg-note {
+      display: none;
+    }
+  }
+</style>
