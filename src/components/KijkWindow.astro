@@ -1,5 +1,5 @@
 ---
-import { agents, counts, totals, ago, rows, fileRows, type Agent, type Change } from '../data/demo';
+import { agents, counts, totals, ago, rows, fileRows, marks, type Agent, type Change } from '../data/demo';
 import { icons } from './icons';
 
 const first = 'shop-api';
@@ -61,7 +61,7 @@ const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
                     {a.repo} · {a.branch}
                   </span>
                   <span class="t-foot">
-                    <Fragment set:html={icons.claude} />
+                    <Fragment set:html={marks(a)} />
                     <span class="t-state">{a.busy ? 'Busy' : 'Idle'}</span>
                     <span class="t-lc">
                       {t.add || t.del ? (
@@ -465,7 +465,8 @@ const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
     padding-top: 6px;
     border-top: 1px dashed color-mix(in srgb, var(--ticket-ink) 25%, transparent);
   }
-  .t-foot .claude {
+  .t-foot .claude,
+  .t-foot .codex {
     width: 13px;
     height: 13px;
   }
@@ -511,7 +512,7 @@ const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
   .gitlab {
     color: #fc6d26;
   }
-  .busy .claude {
+  .busy .works {
     animation: k-zoom 1.2s ease-in-out infinite;
   }
   @keyframes k-zoom {
@@ -1229,7 +1230,7 @@ const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
     }
   }
   @media (prefers-reduced-motion: reduce) {
-    .busy .claude {
+    .busy .works {
       animation-name: k-fade;
     }
     .chip .dot {

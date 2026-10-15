@@ -6,10 +6,10 @@ import KeysReceipt from '../components/KeysReceipt.astro';
 import MachinesScene from '../components/MachinesScene.astro';
 import BranchGraph from '../components/BranchGraph.astro';
 import ReviewDemo from '../components/ReviewDemo.astro';
-import { icons } from '../components/icons';
+import { icons, agentMark } from '../components/icons';
 
 const description =
-  'kijk is an agent-native code viewer: a small, fast, read-only view of the work of your running coding agents.';
+  'kijk is an agent-native code viewer: a small, fast, read-only view of the work of your Claude Code and Codex agents.';
 const repo = 'https://github.com/kijk-dev/kijk';
 ---
 
@@ -32,12 +32,16 @@ const repo = 'https://github.com/kijk-dev/kijk';
       <h1 id="hero-title"><span>See what agents changed.</span> <span class="hl">Anywhere.</span></h1>
       <div class="pitch">
         <p class="lead">
-          kijk is an agent-native code viewer. It lists the coding agents on this computer and on remote machines.
-          Pick one to see its files, its diff and its git state.
+          kijk is an agent-native code viewer. It lists the Claude Code and Codex agents on this computer and on remote
+          machines. Pick one to see its files, its diff and its git state.
         </p>
         <Install />
         <p class="aside">Or with Go:<br /><code>go install github.com/kijk-dev/kijk@latest</code></p>
-        <p class="aside">Works with Claude Code today. Codex and Pi are planned.</p>
+        <p class="aside">
+          Works with <span class="mk"><Fragment set:html={icons.claude} />Claude Code</span> and <span class="mk"
+            ><Fragment set:html={icons.codex} />Codex</span
+          >. Pi is planned.
+        </p>
       </div>
       <div class="plate-stage">
         <KijkWindow />
@@ -48,11 +52,11 @@ const repo = 'https://github.com/kijk-dev/kijk';
       <div class="words">
         <h2 id="rail-title">Every agent on one rail.</h2>
         <p>
-          kijk finds the agents that run on your machine. You never open a project by hand. The newest work comes to
-          the top. Cards appear, change and go as agents start, work and stop.
+          kijk finds the Claude Code and Codex agents that run on your machine. You never open a project by hand. The
+          newest work comes to the top. Cards appear, change and go as agents start, work and stop.
         </p>
         <ul class="facts">
-          <li>Agents in the same folder share one card.</li>
+          <li>Agents in the same folder share one card, also a Claude Code and a Codex agent.</li>
           <li>An agent in a git worktree gets its own.</li>
           <li><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>1</kbd> to <kbd>9</kbd> opens the first nine.</li>
         </ul>
@@ -64,7 +68,7 @@ const repo = 'https://github.com/kijk-dev/kijk';
               <span class="t-top"><span class="t-key">1</span><span class="t-when">just now</span></span>
               <span class="t-name">Fix token refresh</span>
               <span class="t-where">shop-api · fix/token-refresh</span>
-              <span class="t-foot"><Fragment set:html={icons.claude} /><span class="t-state">Busy</span></span>
+              <span class="t-foot"><Fragment set:html={agentMark('codex')} /><span class="t-state">Busy</span></span>
             </div>
           </div>
           <p><b>Busy.</b> The agent is working. Its mark pulses.</p>
@@ -81,15 +85,17 @@ const repo = 'https://github.com/kijk-dev/kijk';
           <p><b>Done.</b> It finished since you last looked. A blue dot waits for you.</p>
         </li>
         <li>
-          <div class="t-wrap">
+          <div class="t-wrap busy">
             <div class="ticket">
-              <span class="t-top"><span class="t-key">3</span><span class="t-when">1h ago</span></span>
-              <span class="t-name">Tidy CLI flags</span>
+              <span class="t-top"><span class="t-key">3</span><span class="t-when">1m ago</span></span>
+              <span class="t-name">Tidy CLI flags, Write the tests</span>
               <span class="t-where">cli · main</span>
-              <span class="t-foot"><Fragment set:html={icons.claude} /><span class="t-state">Idle</span></span>
+              <span class="t-foot"
+                ><Fragment set:html={agentMark('claude', false) + agentMark('codex')} /><span class="t-state">Busy</span></span
+              >
             </div>
           </div>
-          <p><b>Idle.</b> Nothing new. The card stays until the agent stops.</p>
+          <p><b>Shared.</b> Two agents, one folder. Only the mark of the one that works pulses.</p>
         </li>
       </ol>
     </section>
@@ -223,7 +229,7 @@ const repo = 'https://github.com/kijk-dev/kijk';
         <div><dt>Runs on</dt><dd>macOS, Linux and Windows.</dd></div>
         <div><dt>Needs</dt><dd><code>git</code>. Without it, you see the files but no Git tab.</dd></div>
         <div><dt>Opens in</dt><dd>An app window with Chrome, Edge, Brave, Chromium or Vivaldi. Otherwise a normal browser tab.</dd></div>
-        <div><dt>Agents</dt><dd>Claude Code today. Codex and Pi are planned.</dd></div>
+        <div><dt>Agents</dt><dd>Claude Code, and Codex 0.157 or newer. Pi is planned.</dd></div>
         <div><dt>Updates</dt><dd>Run <code>kijk update</code>, or click Update in the status bar.</dd></div>
       </dl>
     </section>
@@ -321,6 +327,16 @@ const repo = 'https://github.com/kijk-dev/kijk';
     margin: 14px 0 0;
     font-size: 14px;
     color: var(--muted);
+  }
+  .mk {
+    color: var(--text);
+    white-space: nowrap;
+  }
+  .mk :global(svg) {
+    width: 14px;
+    height: 14px;
+    margin-right: 5px;
+    vertical-align: -2px;
   }
   .aside + .aside {
     margin-top: 6px;
