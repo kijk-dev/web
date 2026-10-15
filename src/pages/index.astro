@@ -338,6 +338,19 @@ const repo = 'https://github.com/kijk-dev/kijk';
     height: 100%;
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
+    box-shadow: 0 0 0 1px #b9bfc6, 0 2px 4px rgb(25 29 35 / 0.08), 0 40px 80px -24px rgb(25 29 35 / 0.38);
+  }
+  /* The window's panels share the page's Paper, so the hero copy needs a firmer edge to stand off it. */
+  .plate-stage :global(.k-title) {
+    background: #e6eaee;
+  }
+  @media (prefers-color-scheme: dark) {
+    .plate-stage :global(.kijk) {
+      box-shadow: 0 0 0 1px #3a3f46, 0 40px 90px -24px rgb(0 0 0 / 0.75);
+    }
+    .plate-stage :global(.k-title) {
+      background: #23272d;
+    }
   }
 
   .course {
