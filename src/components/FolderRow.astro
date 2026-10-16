@@ -1,0 +1,71 @@
+---
+import type { Folder } from '../data/folders';
+import { icons } from './icons';
+
+interface Props {
+  f: Folder;
+  class?: string;
+}
+const { f, class: cls } = Astro.props;
+---
+
+<li class:list={['row', 'f-row', cls, { missing: f.missing }]}>
+  <div class="r-btn">
+    <span class="r-marks f-icon" set:html={icons.folder} />
+    <span class="r-names">{f.repo}</span>
+    {f.missing ? (
+      <span class="f-rm" set:html={icons.close} />
+    ) : f.add || f.del ? (
+      <span class="f-lc">
+        <span class="lc-add">+{f.add}</span> <span class="lc-del">−{f.del}</span>
+      </span>
+    ) : null}
+    <span class="r-where">
+      {f.missing ? (
+        <>
+          <i>missing</i> · {f.parent}
+        </>
+      ) : (
+        `${f.branch} · ${f.parent}`
+      )}
+    </span>
+  </div>
+</li>
+
+<style is:global>
+  .f-icon {
+    color: var(--muted);
+  }
+  .f-lc,
+  .f-rm {
+    grid-area: when;
+    display: flex;
+    gap: 5px;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+  }
+  .f-rm {
+    color: var(--muted);
+  }
+  .f-rm svg {
+    width: 12px;
+    height: 12px;
+  }
+  .f-row.missing .r-names {
+    color: var(--muted);
+    font-weight: 400;
+  }
+  .f-row.arrived .r-btn {
+    animation: f-arrive 1.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes f-arrive {
+    from {
+      background: color-mix(in srgb, var(--blue) 28%, var(--select));
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .f-row.arrived .r-btn {
+      animation: none;
+    }
+  }
+</style>

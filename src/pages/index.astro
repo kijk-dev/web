@@ -6,11 +6,36 @@ import KeysReceipt from '../components/KeysReceipt.astro';
 import MachinesScene from '../components/MachinesScene.astro';
 import BranchGraph from '../components/BranchGraph.astro';
 import ReviewDemo from '../components/ReviewDemo.astro';
-import { icons, agentMark } from '../components/icons';
+import AgentRow from '../components/AgentRow.astro';
+import FoldersScene from '../components/FoldersScene.astro';
+import { icons } from '../components/icons';
+import type { Agent } from '../data/demo';
 
 const description =
   'kijk is an agent-native code viewer: a small, fast, read-only view of the work of your Claude Code and Codex agents.';
 const repo = 'https://github.com/kijk-dev/kijk';
+
+const example = (a: Partial<Agent>) => a as Agent;
+const states = [
+  {
+    a: example({ id: 'busy', names: ['Fix token refresh'], types: ['codex'], repo: 'shop-api', branch: 'fix/token-refresh', busy: true }),
+    when: 'just now',
+    state: 'Busy.',
+    note: 'The agent is working. Its mark pulses.',
+  },
+  {
+    a: example({ id: 'done', names: ['Add VAT to invoices'], repo: 'billing', branch: 'feat/vat', busy: false, finished: true }),
+    when: '4m ago',
+    state: 'Done.',
+    note: 'It finished since you last looked. A blue dot waits for you.',
+  },
+  {
+    a: example({ id: 'shared', names: ['Tidy CLI flags', 'Write the tests'], types: ['claude', 'codex'], working: 'codex', repo: 'cli', branch: 'main', busy: true }),
+    when: '1m ago',
+    state: 'Shared.',
+    note: 'Two agents, one folder. Only the mark of the one that works pulses.',
+  },
+];
 ---
 
 <Base title="kijk — an agent-native code viewer" description={description}>
@@ -50,54 +75,28 @@ const repo = 'https://github.com/kijk-dev/kijk';
 
     <section id="rail" class="course" aria-labelledby="rail-title">
       <div class="words">
-        <h2 id="rail-title">Every agent on one rail.</h2>
+        <h2 id="rail-title">Every agent in one list.</h2>
         <p>
           kijk finds the Claude Code and Codex agents that run on your machine. You never open a project by hand. The
-          newest work comes to the top. Cards appear, change and go as agents start, work and stop.
+          newest work comes to the top. Rows appear, change and go as agents start, work and stop.
         </p>
         <ul class="facts">
-          <li>Agents in the same folder share one card, also a Claude Code and a Codex agent.</li>
+          <li>Agents in the same folder share one row, also a Claude Code and a Codex agent.</li>
           <li>An agent in a git worktree gets its own.</li>
           <li><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>1</kbd> to <kbd>9</kbd> opens the first nine.</li>
         </ul>
       </div>
-      <ol class="states" aria-label="Card states">
-        <li>
-          <div class="t-wrap busy">
-            <div class="ticket">
-              <span class="t-top"><span class="t-key">1</span><span class="t-when">just now</span></span>
-              <span class="t-name">Fix token refresh</span>
-              <span class="t-where">shop-api · fix/token-refresh</span>
-              <span class="t-foot"><Fragment set:html={agentMark('codex')} /><span class="t-state">Busy</span></span>
-            </div>
-          </div>
-          <p><b>Busy.</b> The agent is working. Its mark pulses.</p>
-        </li>
-        <li>
-          <div class="t-wrap finished">
-            <div class="ticket">
-              <span class="t-top"><span class="t-key">2</span><span class="t-when">4m ago</span><span class="t-done"></span></span>
-              <span class="t-name">Add VAT to invoices</span>
-              <span class="t-where">billing · feat/vat</span>
-              <span class="t-foot"><Fragment set:html={icons.claude} /><span class="t-state">Idle</span></span>
-            </div>
-          </div>
-          <p><b>Done.</b> It finished since you last looked. A blue dot waits for you.</p>
-        </li>
-        <li>
-          <div class="t-wrap busy">
-            <div class="ticket">
-              <span class="t-top"><span class="t-key">3</span><span class="t-when">1m ago</span></span>
-              <span class="t-name">Tidy CLI flags, Write the tests</span>
-              <span class="t-where">cli · main</span>
-              <span class="t-foot"
-                ><Fragment set:html={agentMark('claude', false) + agentMark('codex')} /><span class="t-state">Busy</span></span
-              >
-            </div>
-          </div>
-          <p><b>Shared.</b> Two agents, one folder. Only the mark of the one that works pulses.</p>
-        </li>
-      </ol>
+      <ul class="states rows" aria-label="Row states">
+        {
+          states.map(x => (
+            <AgentRow a={x.a} when={x.when}>
+              <p>
+                <b>{x.state}</b> {x.note}
+              </p>
+            </AgentRow>
+          ))
+        }
+      </ul>
     </section>
 
     <section id="review" class="course" aria-labelledby="review-title">
@@ -190,7 +189,7 @@ const repo = 'https://github.com/kijk-dev/kijk';
         <div>
           <p>
             Some agents run on a VM or a box without a screen. Add the machine once, with an alias from your SSH config
-            or <code>user@host</code>. Its agents join the same rail, under their own header.
+            or <code>user@host</code>. Its agents join the same list, under their own header.
           </p>
           <p>
             Read their files and diffs. Stage, commit, push and fetch there. kijk uses your own <code>ssh</code>, keys
@@ -199,6 +198,23 @@ const repo = 'https://github.com/kijk-dev/kijk';
         </div>
       </div>
       <MachinesScene />
+    </section>
+
+    <section id="folders" class="course wide" aria-labelledby="folders-title">
+      <div class="words">
+        <h2 id="folders-title">Or open a folder, no agents needed.</h2>
+        <div>
+          <p>
+            kijk is also a light viewer for folders you pick. <code class="nw">kijk ~/code/docs</code> adds the folder to
+            a second window, “kijk · Folders”, and opens it there. Same files, code and Git views.
+          </p>
+          <p>
+            The list stays until you remove a folder. A folder that is no longer on disk stays too, marked missing. With
+            only this window open, kijk does not look for agents.
+          </p>
+        </div>
+      </div>
+      <FoldersScene />
     </section>
 
     <section id="keys" class="course" aria-labelledby="keys-title">
@@ -216,27 +232,12 @@ const repo = 'https://github.com/kijk-dev/kijk';
       <KeysReceipt />
     </section>
 
-    <section class="course single" aria-labelledby="one-title">
-      <div class="words">
-        <h2 id="one-title">One agent is enough.</h2>
-        <p>
-          You don't need twenty agents. With one, kijk is still a quick way to see what it changed: a live view
-          of its folder, its diff and its git state, next to your terminal. One small binary that you keep open all
-          day.
-        </p>
-      </div>
-      <dl class="menu needs">
-        <div><dt>Runs on</dt><dd>macOS, Linux and Windows.</dd></div>
-        <div><dt>Needs</dt><dd><code>git</code>. Without it, you see the files but no Git tab.</dd></div>
-        <div><dt>Opens in</dt><dd>An app window with Chrome, Edge, Brave, Chromium or Vivaldi. Otherwise a normal browser tab.</dd></div>
-        <div><dt>Agents</dt><dd>Claude Code, and Codex 0.157 or newer. Pi is planned.</dd></div>
-        <div><dt>Updates</dt><dd>Run <code>kijk update</code>, or click Update in the status bar.</dd></div>
-      </dl>
-    </section>
-
     <section class="close" aria-labelledby="close-title">
       <h2 id="close-title">Install kijk in one line.</h2>
-      <p>Then run <code>kijk</code>, and your agents are on the rail.</p>
+      <p>
+        Then run <code>kijk</code>, and your agents are in the list. Or <code class="nw">kijk ~/code/api</code> for just a
+        folder.
+      </p>
       <div class="close-ticket"><Install big /></div>
       <p class="close-links">
         <a href={repo} target="_blank" rel="noopener">Source and docs on GitHub</a>
@@ -387,8 +388,7 @@ const repo = 'https://github.com/kijk-dev/kijk';
     margin: 0 0 14px;
     max-width: 44ch;
   }
-  .words code,
-  .menu code {
+  .words code {
     font-size: 0.92em;
   }
   .facts {
@@ -423,33 +423,33 @@ const repo = 'https://github.com/kijk-dev/kijk';
     color: var(--text);
   }
 
+  .nw {
+    white-space: nowrap;
+  }
+
   .states {
-    list-style: none;
     margin: 0;
-    padding: 0;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  .states :global(.row) {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 20px;
-    font-size: 14px;
+    grid-template-columns: minmax(0, 17rem) minmax(0, 1fr);
+    gap: 24px;
+    align-items: center;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .states :global(.r-btn) {
+    border-bottom: 0;
+    background: var(--panel);
   }
   .states p {
-    margin: 16px 0 0;
+    margin: 0;
+    font-size: 14px;
     color: var(--muted);
   }
   .states b {
     color: var(--text);
-  }
-  .states .ticket {
-    cursor: default;
-  }
-  .states .ticket:hover {
-    background: var(--ticket);
-  }
-  .states li:nth-child(2) .t-wrap {
-    transform: translateY(12px);
-  }
-  .states li:nth-child(2) p {
-    margin-top: 28px;
   }
 
   .lc {
@@ -463,27 +463,6 @@ const repo = 'https://github.com/kijk-dev/kijk';
   }
   .lc-del {
     color: var(--removed);
-  }
-
-  .menu {
-    margin: 0;
-    display: grid;
-    border-top: 1px solid var(--hairline);
-  }
-  .menu > div {
-    display: grid;
-    grid-template-columns: 11rem minmax(0, 1fr);
-    gap: 16px;
-    padding: 14px 0;
-    border-bottom: 1px solid var(--hairline);
-  }
-  .menu dt {
-    font-weight: 700;
-    font-variation-settings: 'CASL' 0.5;
-  }
-  .menu dd {
-    margin: 0;
-    color: var(--muted);
   }
 
   .course.wide {
@@ -641,19 +620,13 @@ const repo = 'https://github.com/kijk-dev/kijk';
     nav a:not(.gh) {
       display: none;
     }
-    .states {
+    .states :global(.row) {
       grid-template-columns: minmax(0, 1fr);
-      max-width: 300px;
+      gap: 0;
+      padding-bottom: 10px;
     }
-    .states li:nth-child(2) .t-wrap {
-      transform: none;
-    }
-    .states li:nth-child(2) p {
-      margin-top: 16px;
-    }
-    .menu > div {
-      grid-template-columns: minmax(0, 1fr);
-      gap: 2px;
+    .states p {
+      padding: 0 12px 0 32px;
     }
   }
 </style>
