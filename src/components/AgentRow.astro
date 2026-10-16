@@ -1,0 +1,35 @@
+---
+import { ago, marks, type Agent } from '../data/demo';
+
+interface Props {
+  a: Agent;
+  // The Ctrl+Alt number; a row with a number is a button that opens the agent.
+  n?: number;
+  on?: boolean;
+  when?: string;
+  class?: string;
+}
+const { a, n, on = false, when = ago(a.agoSec), class: cls } = Astro.props;
+const Tag = n ? 'button' : 'div';
+const label = { claude: 'Claude Code', codex: 'Codex' };
+const who = [...new Set(a.types ?? ['claude' as const])].map(t => label[t]).join(' and ');
+---
+
+<li class:list={['row', cls, { busy: a.busy, finished: a.finished, on }]} data-agent={a.id}>
+  <Tag
+    class="r-btn"
+    type={n ? 'button' : undefined}
+    data-agent={a.id}
+    aria-pressed={n ? String(on) : undefined}
+    aria-keyshortcuts={n ? `Control+Alt+${n}` : undefined}
+    title={n ? `Ctrl+Alt+${n} to open` : undefined}
+  >
+    <span class="r-marks" set:html={marks(a)} />
+    <span class="sr-only" data-state>{who}, {a.busy ? 'Busy' : 'Idle'}.</span>
+    <span class="r-names">{a.names.join(', ')}</span>
+    <span class="r-done"><span class="sr-only">Finished since you last looked.</span></span>
+    <span class="r-when" data-ago={a.agoSec}>{when}</span>
+    <span class="r-where">{a.repo} · {a.branch}</span>
+  </Tag>
+  <slot />
+</li>

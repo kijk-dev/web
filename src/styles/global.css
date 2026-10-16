@@ -15,10 +15,8 @@
 
   --win: #ffffff;
   --panel: #f5f7f9;
-  --rail-bg: #e9edf1;
   --ticket: #ffffff;
   --ticket-ink: #191d23;
-  --ticket-lit: #fff6e6;
 
   --added: #167839;
   --removed: #c52c2a;
@@ -55,10 +53,8 @@
 
     --win: #15171b;
     --panel: #1c1f24;
-    --rail-bg: #121418;
     --ticket: #23272d;
     --ticket-ink: #e3e6ea;
-    --ticket-lit: #3a2f1f;
 
     --added: #69c27e;
     --removed: #e87f7f;

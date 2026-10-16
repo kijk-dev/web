@@ -1,6 +1,7 @@
 ---
-import { agents, counts, totals, ago, rows, fileRows, marks, type Agent, type Change } from '../data/demo';
+import { agents, counts, totals, rows, fileRows, type Agent, type Change } from '../data/demo';
 import { icons } from './icons';
+import AgentRow from './AgentRow.astro';
 
 const first = 'shop-api';
 const letter = { M: 'M', A: 'A', U: 'U' } as const;
@@ -37,48 +38,8 @@ const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
   <div class="k-body">
     <aside class="k-rail" aria-label="Agents">
       <header>Agents <span class="k-count">{agents.length}</span></header>
-      <ol class="tickets">
-        {
-          agents.map((a, i) => {
-            const t = totals(a);
-            return (
-              <li class:list={['t-wrap', { busy: a.busy, finished: a.finished, on: a.id === first }]} data-agent={a.id}>
-                <button
-                  class="ticket"
-                  type="button"
-                  data-agent={a.id}
-                  aria-pressed={a.id === first ? 'true' : 'false'}
-                  aria-keyshortcuts={`Control+Alt+${i + 1}`}
-                  title={`Ctrl+Alt+${i + 1} to open`}
-                >
-                  <span class="t-top">
-                    <span class="t-key">{i + 1}</span>
-                    <span class="t-when" data-ago={a.agoSec}>{ago(a.agoSec)}</span>
-                    <span class="t-done" aria-label="Finished since you last looked" />
-                  </span>
-                  <span class="t-name">{a.names.join(', ')}</span>
-                  <span class="t-where">
-                    {a.repo} · {a.branch}
-                  </span>
-                  <span class="t-foot">
-                    <Fragment set:html={marks(a)} />
-                    <span class="t-state">{a.busy ? 'Busy' : 'Idle'}</span>
-                    <span class="t-lc">
-                      {t.add || t.del ? (
-                        <>
-                          <span class="lc-add" data-total-add={a.id}>+{t.add}</span> <span class="lc-del">−{t.del}</span>
-                        </>
-                      ) : (
-                        'no changes'
-                      )}
-                    </span>
-                  </span>
-                  <span class="t-stamp" aria-hidden="true">Pushed</span>
-                </button>
-              </li>
-            );
-          })
-        }
+      <ol class="rows">
+        {agents.map((a, i) => <AgentRow a={a} n={i + 1} on={a.id === first} />)}
       </ol>
     </aside>
 
@@ -335,10 +296,10 @@ const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
     min-height: 0;
   }
 
-  /* The rail: tickets tucked under a bar on the pass */
+  /* The rail: the agents list, row for row as the app draws it */
   .k-rail {
     position: relative;
-    background: var(--rail-bg);
+    background: var(--panel);
     border-right: 1px solid var(--hairline);
     overflow: auto;
     scrollbar-width: thin;
@@ -366,141 +327,86 @@ const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
     color: var(--blue);
     letter-spacing: 0;
   }
-  .tickets {
-    position: relative;
+  .rows {
     list-style: none;
     margin: 0;
-    padding: 2px 14px 18px;
+    padding: 0;
+    border-top: 1px solid var(--hairline);
+  }
+  .r-btn {
     display: grid;
-    gap: 10px;
-  }
-  .t-wrap {
-    filter: drop-shadow(0 1px 0 rgb(25 29 35 / 0.08)) drop-shadow(0 3px 5px rgb(25 29 35 / 0.1));
-    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), filter 0.45s;
-  }
-  .t-wrap.on {
-    transform: translateX(14px);
-    filter: drop-shadow(0 2px 2px rgb(168 96 3 / 0.18)) drop-shadow(0 10px 18px rgb(233 160 62 / 0.38));
-  }
-  .ticket {
-    --tooth: 6px;
-    position: relative;
-    display: grid;
-    gap: 2px;
-    width: 100%;
-    text-align: left;
-    border: 0;
-    cursor: pointer;
-    padding: 9px 12px calc(10px + var(--tooth));
-    background: var(--ticket);
-    color: var(--ticket-ink);
-    font-family: var(--mono);
-    font-variation-settings: 'CASL' 0, 'MONO' 1;
-    font-size: 12px;
-    line-height: 1.4;
-    mask:
-      linear-gradient(#000 0 0) top / 100% calc(100% - var(--tooth)) no-repeat,
-      conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / calc(var(--tooth) * 2) var(--tooth) repeat-x;
-    transition: background-color 0.3s;
-  }
-  .ticket:hover {
-    background: color-mix(in srgb, var(--ticket-lit) 55%, var(--ticket));
-  }
-  .on .ticket {
-    background: var(--ticket-lit);
-  }
-  .ticket:focus-visible {
-    outline: 2px solid var(--ember);
-    outline-offset: -4px;
-  }
-  .t-top {
-    display: flex;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      'marks names done when'
+      '. where where where';
     align-items: center;
-    gap: 8px;
-    color: var(--muted);
+    column-gap: 6px;
+    width: 100%;
+    padding: 6px 12px;
+    border: 0;
+    border-bottom: 1px solid var(--hairline);
+    background: none;
+    text-align: left;
   }
-  .t-key {
-    min-width: 18px;
-    height: 18px;
-    padding: 0 4px;
-    border: 1px solid currentColor;
-    border-radius: 3px;
-    display: inline-grid;
-    place-items: center;
-    font-weight: 700;
-    font-size: 11px;
-    color: var(--ticket-ink);
+  button.r-btn {
+    cursor: pointer;
   }
-  .t-when {
-    margin-left: auto;
-    font-variant-numeric: tabular-nums;
+  button.r-btn:hover {
+    background: color-mix(in srgb, var(--select) 50%, transparent);
   }
-  .t-done {
+  .on .r-btn {
+    background: var(--select);
+  }
+  .r-btn:focus-visible {
+    outline: 2px solid var(--ember-deep);
+    outline-offset: -2px;
+  }
+  @media (prefers-color-scheme: dark) {
+    .r-btn:focus-visible {
+      outline-color: var(--ember);
+    }
+  }
+  .r-marks {
+    grid-area: marks;
+    display: flex;
+    gap: 3px;
+  }
+  .r-marks svg {
+    width: 14px;
+    height: 14px;
+  }
+  .r-names {
+    grid-area: names;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .r-done {
+    grid-area: done;
     display: none;
     width: 8px;
     height: 8px;
     border-radius: 50%;
     background: var(--blue);
   }
-  .finished .t-done {
+  .finished .r-done {
     display: block;
   }
-  .t-name {
-    font-weight: 700;
-    font-size: 13px;
-    margin-top: 4px;
-    font-variation-settings: 'CASL' 0.4, 'MONO' 1;
-  }
-  .t-where {
+  .r-when,
+  .r-where {
+    font-size: 12px;
     color: var(--muted);
+  }
+  .r-when {
+    grid-area: when;
+    font-variant-numeric: tabular-nums;
+  }
+  .r-where {
+    grid-area: where;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-  .t-foot {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 6px;
-    padding-top: 6px;
-    border-top: 1px dashed color-mix(in srgb, var(--ticket-ink) 25%, transparent);
-  }
-  .t-foot .claude,
-  .t-foot .codex {
-    width: 13px;
-    height: 13px;
-  }
-  .t-state {
-    color: var(--muted);
-  }
-  .busy .t-state {
-    color: var(--ticket-ink);
-  }
-  .t-lc {
-    margin-left: auto;
-    font-variant-numeric: tabular-nums;
-    color: var(--muted);
-  }
-  .t-stamp {
-    position: absolute;
-    right: 12px;
-    top: 28px;
-    padding: 1px 6px;
-    border: 2px solid var(--blue);
-    border-radius: 4px;
-    color: var(--blue);
-    font-weight: 800;
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    transform: rotate(-8deg) scale(1.6);
-    opacity: 0;
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s;
-    pointer-events: none;
-  }
-  .pushed .t-stamp {
-    opacity: 0.9;
-    transform: rotate(-8deg) scale(1);
   }
   svg.i.fill {
     fill: currentColor;
@@ -1205,28 +1111,15 @@ const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
     .k-rail {
       border-right: 0;
       border-bottom: 1px solid var(--hairline);
-      overflow-x: auto;
-      overflow-y: hidden;
     }
-    .k-rail header {
+    [data-kijk] .k-rail header {
       display: none;
     }
-    .k-rail {
-      scroll-snap-type: x mandatory;
-      scroll-padding-left: 14px;
+    [data-kijk] .k-rail {
+      max-height: 186px;
     }
-    .tickets {
-      width: max-content;
-      grid-auto-flow: column;
-      grid-auto-columns: 210px;
-      gap: 16px;
-      padding: 12px 14px 16px;
-    }
-    .t-wrap {
-      scroll-snap-align: start;
-    }
-    .t-wrap.on {
-      transform: translateY(8px);
+    [data-kijk] .rows {
+      border-top: 0;
     }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -1236,10 +1129,8 @@ const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
     .chip .dot {
       animation: none;
     }
-    .t-wrap,
     .plate.enter,
-    .ln.live.shown,
-    .t-stamp {
+    .ln.live.shown {
       transition: none;
       animation: none;
     }
@@ -1249,16 +1140,17 @@ const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
 <script>
   const root = document.querySelector<HTMLElement>('[data-kijk]')!;
   const title = root.querySelector<HTMLElement>('[data-title]')!;
-  const wraps = [...root.querySelectorAll<HTMLElement>('.t-wrap')];
+  const wraps = [...root.querySelectorAll<HTMLElement>('.k-rail .row')];
   const plates = [...root.querySelectorAll<HTMLElement>('.plate')];
   const loadedAt = Date.now();
   const rail = root.querySelector<HTMLElement>('.k-rail')!;
-  const railLeft = (w: HTMLElement) => rail.scrollLeft + w.getBoundingClientRect().left - rail.getBoundingClientRect().left - 14;
-  const showTicket = (w: HTMLElement) => {
-    if (rail.scrollWidth > rail.clientWidth + 4) rail.scrollTo({ left: railLeft(w), behavior: 'smooth' });
+  // On a phone the list is a short strip: scroll the picked row into it, never the page.
+  const showRow = (w: HTMLElement, smooth = true) => {
+    const top = w.offsetTop - rail.clientHeight / 2 + w.offsetHeight / 2;
+    if (rail.scrollHeight > rail.clientHeight + 4) rail.scrollTo({ top, behavior: smooth ? 'smooth' : 'auto' });
   };
   const firstOn = wraps.find(w => w.classList.contains('on'));
-  if (firstOn && rail.scrollWidth > rail.clientWidth + 4) rail.scrollLeft = railLeft(firstOn);
+  if (firstOn) showRow(firstOn, false);
 
   function pick(id: string, focus = false) {
     wraps.forEach(w => {
@@ -1269,7 +1161,7 @@ const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
       if (on) {
         w.classList.remove('finished');
         if (focus) b.focus({ preventScroll: true });
-        showTicket(w);
+        showRow(w);
       }
     });
     plates.forEach(p => {
@@ -1287,8 +1179,8 @@ const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
 
   root.addEventListener('click', e => {
     const t = e.target as HTMLElement;
-    const ticket = t.closest<HTMLElement>('.ticket');
-    if (ticket) return pick(ticket.dataset.agent!);
+    const row = t.closest<HTMLElement>('.k-rail .r-btn');
+    if (row) return pick(row.dataset.agent!);
 
     const plate = t.closest<HTMLElement>('.plate');
     if (!plate) return;
@@ -1326,7 +1218,7 @@ const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
     e.preventDefault();
     pick(w.dataset.agent!, true);
   });
-  root.querySelector('.tickets')!.addEventListener('keydown', e => {
+  root.querySelector('.rows')!.addEventListener('keydown', e => {
     const k = (e as KeyboardEvent).key;
     if (k !== 'ArrowDown' && k !== 'ArrowUp' && k !== 'ArrowLeft' && k !== 'ArrowRight') return;
     const i = wraps.findIndex(w => w.classList.contains('on'));
@@ -1338,7 +1230,6 @@ const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
   // Staging, commit and push run in the page only.
   root.querySelectorAll<HTMLFormElement>('[data-commit]').forEach(form => {
     const plate = form.closest<HTMLElement>('.plate')!;
-    const id = plate.dataset.agent!;
     const msg = form.querySelector('textarea')!;
     const btn = form.querySelector<HTMLButtonElement>('button')!;
     const out = plate.querySelector<HTMLElement>('[data-output]')!;
@@ -1355,7 +1246,6 @@ const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
       push.hidden = true;
       out.hidden = false;
       out.textContent = `Pushed to origin/${plate.querySelector('.branch')!.textContent}`;
-      root.querySelector(`.t-wrap[data-agent="${id}"]`)!.classList.add('pushed');
     };
     push.addEventListener('click', doPush);
 
@@ -1394,12 +1284,12 @@ const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
   });
 
   // Live: times tick, a busy agent writes a line into the open file, another one finishes.
-  const whens = [...root.querySelectorAll<HTMLElement>('.t-when')];
+  const whens = [...root.querySelectorAll<HTMLElement>('.r-when')];
   const ago = (s: number) => (s < 60 ? 'just now' : s < 3600 ? `${Math.floor(s / 60)}m ago` : `${Math.floor(s / 3600)}h ago`);
   setInterval(() => {
     const el = (Date.now() - loadedAt) / 1000;
     whens.forEach(w => {
-      const busyNow = w.closest('.t-wrap')!.classList.contains('busy') && w.closest('[data-agent="docs"], [data-agent="shop-api"]');
+      const busyNow = w.closest('.row')!.classList.contains('busy') && w.closest('[data-agent="docs"], [data-agent="shop-api"]');
       w.textContent = ago(busyNow ? 0 : +w.dataset.ago! + el);
     });
   }, 15000);
@@ -1415,9 +1305,10 @@ const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
   }, 6000);
 
   setTimeout(() => {
-    const w = root.querySelector<HTMLElement>('.t-wrap[data-agent="search"]')!;
+    const w = root.querySelector<HTMLElement>('.row[data-agent="search"]')!;
     w.classList.remove('busy');
-    w.querySelector('.t-state')!.textContent = 'Idle';
+    const state = w.querySelector<HTMLElement>('[data-state]')!;
+    state.textContent = state.textContent!.replace('Busy', 'Idle');
     if (!w.classList.contains('on')) w.classList.add('finished');
   }, 14000);
 </script>

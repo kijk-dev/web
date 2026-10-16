@@ -1,6 +1,7 @@
 ---
-import { agents, devbox, counts, totals, ago, rows, marks, type Agent } from '../data/demo';
+import { agents, devbox, counts, totals, rows, type Agent } from '../data/demo';
 import { icons } from './icons';
+import AgentRow from './AgentRow.astro';
 
 const LAPTOP =
   '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16"/></svg>';
@@ -56,28 +57,9 @@ const saved =
                     {g.remote && <span class="ms-state">connecting…</span>}
                   </div>
                 </div>
-                <ol class="tickets">
+                <ol class="rows">
                   {g.list.map((a, i) => (
-                    <li class:list={['t-wrap', { busy: a.busy, finished: a.finished }]}>
-                      <span class="ticket">
-                        <span class="t-top">
-                          <span class="t-key">{g.from + i}</span>
-                          <span class="t-when">{ago(a.agoSec)}</span>
-                          <span class="t-done" />
-                        </span>
-                        <span class="t-name">{a.names.join(', ')}</span>
-                        <span class="t-where">
-                          {a.repo} · {a.branch}
-                        </span>
-                        <span class="t-foot">
-                          <Fragment set:html={marks(a)} />
-                          <span class="t-state">{a.busy ? 'Busy' : 'Idle'}</span>
-                          <span class="t-lc">
-                            <span class="lc-add">+{t(a).add}</span> <span class="lc-del">−{t(a).del}</span>
-                          </span>
-                        </span>
-                      </span>
-                    </li>
+                    <AgentRow a={a} class={i === 0 ? (g.remote ? 'ms-pick-remote' : 'ms-pick-local') : undefined} />
                   ))}
                 </ol>
               </div>
@@ -248,9 +230,6 @@ const saved =
   .ms-win .k-tabs button {
     cursor: default;
   }
-  .ms-win .ticket {
-    cursor: default;
-  }
   .ms-win .commit {
     margin-top: auto;
   }
@@ -289,8 +268,8 @@ const saved =
     height: 12px;
   }
 
-  .ms-rail .tickets {
-    padding-bottom: 14px;
+  .ms-rail .rows {
+    border-top: 0;
   }
   .ms-fold {
     display: grid;
@@ -305,15 +284,14 @@ const saved =
     grid-template-rows: 1fr;
   }
   .ms-head {
-    --mh-bg: color-mix(in srgb, var(--hairline) 70%, var(--rail-bg));
+    --mh-bg: color-mix(in srgb, var(--hairline) 65%, var(--panel));
     display: flex;
     align-items: center;
     gap: 7px;
     height: 30px;
-    margin-bottom: 10px;
     padding: 0 12px 0 6px;
     background: var(--mh-bg);
-    border-block: 1px solid var(--hairline);
+    border-bottom: 1px solid var(--hairline);
     font: 600 12.5px/1 var(--sans);
   }
   .ms-head .caret svg {
@@ -361,33 +339,24 @@ const saved =
   .s3 .ms-remote-group {
     display: block;
   }
-  .ms-remote-group .t-wrap {
+  .ms-remote-group .row {
     opacity: 0;
-    translate: 0 -14px;
+    translate: 0 -8px;
   }
-  .s4 .ms-remote-group .t-wrap {
+  .s4 .ms-remote-group .row {
     opacity: 1;
     translate: 0 0;
     transition: opacity 0.4s, translate 0.55s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  .s4 .ms-remote-group .t-wrap:nth-child(2) {
+  .s4 .ms-remote-group .row:nth-child(2) {
     transition-delay: 0.15s;
   }
-  .ms-group:first-of-type .t-wrap:first-child,
-  .s5 .ms-remote-group .t-wrap:first-child {
-    transform: translateX(14px);
-    filter: drop-shadow(0 2px 2px rgb(168 96 3 / 0.18)) drop-shadow(0 10px 18px rgb(233 160 62 / 0.38));
+  .ms-pick-local .r-btn,
+  .s5 .ms-pick-remote .r-btn {
+    background: var(--select);
   }
-  .ms-group:first-of-type .t-wrap:first-child .ticket,
-  .s5 .ms-remote-group .t-wrap:first-child .ticket {
-    background: var(--ticket-lit);
-  }
-  .s5 .ms-group:first-of-type .t-wrap:first-child {
-    transform: none;
-    filter: drop-shadow(0 1px 0 rgb(25 29 35 / 0.08)) drop-shadow(0 3px 5px rgb(25 29 35 / 0.1));
-  }
-  .s5 .ms-group:first-of-type .t-wrap:first-child .ticket {
-    background: var(--ticket);
+  .s5 .ms-pick-local .r-btn {
+    background: none;
   }
 
   /* The terminal sits over the lower right of the window. */
@@ -505,15 +474,9 @@ const saved =
       margin-top: -20px;
     }
   }
-  @media (max-width: 640px) {
-    .ms-group:first-of-type .t-wrap:first-child,
-    .s5 .ms-remote-group .t-wrap:first-child {
-      transform: translateY(8px);
-    }
-  }
   @media (prefers-reduced-motion: reduce) {
     .ms-fold,
-    .ms-remote-group .t-wrap,
+    .ms-remote-group .row,
     .s5 .ms-remote,
     .ms-dot,
     .ms-caret {
