@@ -23,7 +23,9 @@ Consult these guides before working on related tasks:
 
 ## Home page
 
-The home page shows a working copy of the kijk window (`src/components/KijkWindow.astro`, demo data in `src/data/demo.ts`). It follows the app's UI in the `web/` folder of `kijk-dev/kijk`. Keep it in step with the app, and keep the demo agents labelled as demo.
+The home page shows a working copy of the kijk window (`src/components/KijkWindow.astro`). It follows the app's UI in the `web/` folder of `kijk-dev/kijk`: one window, with a bar that switches between the Agents and Folders lists. Keep it in step with the app, and keep the demo agents labelled as demo.
+
+The demo data is in `src/data/`: the agents in `demo.ts`, the Folders list in `folders.ts`, and the pull request link scene in `pr.ts`. The scenes take their rows from these files, so change a row there, not in a component.
 
 ## Style
 

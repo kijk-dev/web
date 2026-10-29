@@ -1,17 +1,30 @@
 ---
+import { marks } from '../data/demo';
 import type { Folder } from '../data/folders';
 import { icons } from './icons';
 
 interface Props {
   f: Folder;
+  // The Ctrl+Alt number; a row with a number is a button that opens the folder.
+  n?: number;
+  on?: boolean;
   class?: string;
 }
-const { f, class: cls } = Astro.props;
+const { f, n, on = false, class: cls } = Astro.props;
+const Tag = n && !f.missing ? 'button' : 'div';
+const button = Tag === 'button';
 ---
 
-<li class:list={['row', 'f-row', cls, { missing: f.missing }]}>
-  <div class="r-btn">
-    <span class="r-marks f-icon" set:html={icons.folder} />
+<li class:list={['row', 'f-row', cls, { missing: f.missing, busy: f.agent?.busy, on }]} data-agent={f.missing ? undefined : f.id}>
+  <Tag
+    class="r-btn"
+    type={button ? 'button' : undefined}
+    data-agent={button ? f.id : undefined}
+    aria-pressed={button ? String(on) : undefined}
+    aria-keyshortcuts={button ? `Control+Alt+${n}` : undefined}
+    title={button ? `Ctrl+Alt+${n} to open` : undefined}
+  >
+    {f.agent ? <span class="r-marks" set:html={marks(f.agent)} /> : <span class="r-marks f-icon" set:html={icons.folder} />}
     <span class="r-names">{f.repo}</span>
     {f.missing ? (
       <span class="f-rm" set:html={icons.close} />
@@ -29,7 +42,7 @@ const { f, class: cls } = Astro.props;
         `${f.branch} · ${f.parent}`
       )}
     </span>
-  </div>
+  </Tag>
 </li>
 
 <style is:global>
@@ -54,18 +67,5 @@ const { f, class: cls } = Astro.props;
   .f-row.missing .r-names {
     color: var(--muted);
     font-weight: 400;
-  }
-  .f-row.arrived .r-btn {
-    animation: f-arrive 1.6s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  @keyframes f-arrive {
-    from {
-      background: color-mix(in srgb, var(--blue) 28%, var(--select));
-    }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .f-row.arrived .r-btn {
-      animation: none;
-    }
   }
 </style>

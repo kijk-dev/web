@@ -1,0 +1,456 @@
+---
+import { counts, rows } from '../data/demo';
+import { before, clone, pr, said } from '../data/pr';
+import FolderRow from './FolderRow.astro';
+import AgentRow from './AgentRow.astro';
+import ActivityBar from './ActivityBar.astro';
+import { icons } from './icons';
+
+const command = `kijk ${pr.link}`;
+const after = [...before.folders, clone];
+const shop = before.agents.find(a => a.id === 'shop-api')!;
+const base = (p: string) => p.split('/').pop()!;
+const dir = (p: string) => p.split('/').slice(0, -1).join('/');
+const statusClass = { M: 'modified', A: 'added', U: 'untracked' } as const;
+const c0 = shop.changes[0];
+const added = pr.files.reduce((n, f) => n + f.add, 0);
+const removed = pr.files.reduce((n, f) => n + f.del, 0);
+---
+
+<figure class="prscene s1 s2 s3 s4" data-prscene>
+  <figcaption class="sr-only">
+    Demo. In a terminal, <code>{command}</code> finds no clone of the repo, clones it with gh and prints “{said[3]}” The kijk
+    window switches to the Folders list, shows billing at the end, and opens pull request #{pr.num} on its overview.
+  </figcaption>
+  <div class="pr-stage" aria-hidden="true" inert>
+    <div class="kijk pr-win">
+      <div class="k-title">
+        <span class="lights"><i></i><i></i><i></i></span>
+        <span class="k-title-text"><span class="pr-before">{shop.repo} — kijk</span><span class="pr-after">{clone.repo} — kijk</span></span>
+      </div>
+      <div class="k-body">
+        <ActivityBar list="folders" agents={before.agents} folders={after} />
+        <aside class="k-rail">
+          <header>
+            <span class="pr-before">Agents <span class="k-count">{before.agents.length}</span></span>
+            <span class="pr-after">Folders <span class="k-count">{after.length}</span></span>
+          </header>
+          <ol class="rows pr-before">
+            {before.agents.map(a => <AgentRow a={a} on={a.id === shop.id} />)}
+          </ol>
+          <ol class="rows pr-after">
+            {before.folders.map(f => <FolderRow f={f} />)}
+            <FolderRow f={clone} class="pr-new" on />
+          </ol>
+        </aside>
+        <div class="pr-plates">
+          <section class="pr-plate pr-before">
+            <aside class="k-side">
+              <div class="k-side-head">
+                <span class="k-folder">{shop.repo}</span>
+                <span class="k-icon" set:html={icons.search} />
+                <div class="k-tabs">
+                  <button type="button" aria-pressed="false" set:html={icons.folder} />
+                  <button type="button" aria-pressed="true" set:html={icons.git} />
+                  <button type="button" aria-pressed="false" set:html={icons.pr} />
+                </div>
+              </div>
+              <div class="pr-side-list">
+                <div class="branchbar"><Fragment set:html={icons.git} /><span class="branch">{shop.branch}</span></div>
+                <div class="changes">
+                  <h3>Changes <span class="n">{shop.changes.length}</span></h3>
+                  {shop.changes.map((ch, i) => (
+                    <div class:list={['item', 'change', { selected: i === 0 }]}>
+                      <input type="checkbox" checked={ch.staged} />
+                      <span class:list={['letter', statusClass[ch.status]]}>{ch.status}</span>
+                      <span class:list={['name', statusClass[ch.status]]}>{base(ch.path)}</span>
+                      <span class="dir">{dir(ch.path)}</span>
+                      <span class="lc"><span class="lc-add">+{counts(ch).add}</span> <span class="lc-del">−{counts(ch).del}</span></span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </aside>
+            <div class="k-main">
+              <div class="view">
+                <div class="filetabs"><span class="filetab">{base(c0.path)}<Fragment set:html={icons.close} /></span></div>
+                <div class="diffbar"><span class="path">{c0.path}</span></div>
+                <div class="code">
+                  {rows(c0).map(r =>
+                    r.kind === 'sep' ? (
+                      <div class="ln sep"><span class="gut" /><span class="tx">{r.html}</span></div>
+                    ) : (
+                      <div class:list={['ln', r.kind]}>
+                        <span class="gut"><span>{r.old ?? ''}</span><span>{r.new ?? ''}</span></span>
+                        <span class="tx" set:html={r.html} />
+                      </div>
+                    ),
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="pr-plate pr-after">
+            <aside class="k-side">
+              <div class="k-side-head">
+                <span class="k-folder">{clone.repo}</span>
+                <span class="k-icon" set:html={icons.search} />
+                <div class="k-tabs">
+                  <button type="button" aria-pressed="false" set:html={icons.folder} />
+                  <button type="button" aria-pressed="false" set:html={icons.git} />
+                  <button type="button" aria-pressed="true" set:html={icons.pr} />
+                </div>
+              </div>
+              <div class="pr-side-list">
+                <div class="pr-headline">
+                  <span class="pr-top"><Fragment set:html={icons.github} /><span class="pr-num">#{pr.num}</span><span class="pr-title">{pr.title}</span></span>
+                  <span class="pr-refs"><span class="pr-ref cur">{pr.head}</span> → <span class="pr-ref">{pr.base}</span></span>
+                </div>
+                <h3 class="pr-h3">Changes <span class="n">{pr.files.length}</span> <span class="lc-add">+{added}</span>{removed > 0 && <span class="lc-del">−{removed}</span>}</h3>
+                <div class="item selected pr-ov"><Fragment set:html={icons.pr} /> Overview</div>
+                {pr.files.map(f => (
+                  <div class="item change">
+                    <span class:list={['letter', statusClass[f.status]]}>{f.status}</span>
+                    <span class:list={['name', statusClass[f.status]]}>{base(f.path)}</span>
+                    <span class="dir">{dir(f.path)}</span>
+                    <span class="lc"><span class="lc-add">+{f.add}</span>{f.del > 0 && <span class="lc-del">−{f.del}</span>}</span>
+                  </div>
+                ))}
+              </div>
+            </aside>
+            <div class="k-main">
+              <div class="view">
+                <div class="filetabs">
+                  <span class="filetab">#{pr.num} Overview<Fragment set:html={icons.close} /></span>
+                </div>
+                <div class="pr-ov-body">
+                  <h4>{pr.title} <span class="pr-num">#{pr.num}</span></h4>
+                  <p class="pr-meta"><b>{pr.author}</b> wants to merge <span class="pr-ref cur">{pr.head}</span> into <span class="pr-ref">{pr.base}</span></p>
+                  <span class="chips">
+                    <span class="chip pass"><Fragment set:html={icons.check} />Checks passed</span>
+                    <span class="chip">{pr.review}</span>
+                  </span>
+                  <p class="pr-desc">{pr.description}</p>
+                  <h5>Checks</h5>
+                  <div class="pr-jobs">
+                    {pr.jobs.map((j, i) => (
+                      <>
+                        {i > 0 && <i class="pr-edge" />}
+                        <span class="pr-job"><Fragment set:html={icons.check} />{j}</span>
+                      </>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+      <footer class="k-status">
+        <span class="k-ver"><i class="dot"></i>kijk</span>
+      </footer>
+    </div>
+
+    <!-- The terminal borrows the machines scene's styles, which the page always has. -->
+    <div class="ms-term pr-term">
+      <div class="ms-term-bar">
+        <span class="lights"><i></i><i></i><i></i></span>
+        <span>Terminal</span>
+      </div>
+      <div class="ms-term-body">
+        <p><span class="ms-ps">~ $</span> <span data-type={command}>{command}</span><span class="ms-caret pr-typing" /></p>
+        <p class="ms-out pr-o2">{said[0]}</p>
+        <p class="ms-out pr-o2">{said[1]}</p>
+        <p class="ms-out pr-o3">{said[2]}</p>
+        <p class="ms-out pr-o4">{said[3]}</p>
+        <p class="ms-out pr-o4"><span class="ms-ps">~ $</span> <span class="ms-caret" /></p>
+      </div>
+    </div>
+  </div>
+</figure>
+
+<style is:global>
+  .prscene {
+    position: relative;
+    margin: 0;
+    padding-bottom: 40px;
+    min-width: 0;
+  }
+  .pr-stage {
+    position: relative;
+  }
+  .pr-win {
+    height: 560px;
+  }
+  .pr-win .k-side {
+    display: flex;
+  }
+  .pr-win .k-tabs button {
+    cursor: default;
+  }
+  .pr-win .k-rail header > span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .prscene:not(.s4) .pr-after,
+  .prscene.s4 .pr-before {
+    display: none;
+  }
+  .pr-plates {
+    display: grid;
+    min-height: 0;
+  }
+  .pr-plate {
+    grid-area: 1 / 1;
+    display: grid;
+    grid-template-columns: var(--side-w) minmax(0, 1fr);
+    min-height: 0;
+  }
+  .s4 .pr-plate.pr-after {
+    animation: k-plate 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .pr-side-list {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .pr-headline {
+    display: grid;
+    gap: 5px;
+    padding: 9px 12px 10px;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .pr-headline .pr-title {
+    white-space: normal;
+  }
+  .pr-ref {
+    font-family: var(--mono);
+    font-variation-settings: 'MONO' 1;
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--lane-main) 16%, transparent);
+    color: var(--lane-main);
+  }
+  .pr-ref.cur {
+    background: var(--blue-fill);
+    color: #fff;
+  }
+  .pr-refs {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .pr-h3 {
+    margin: 0;
+    padding: 10px 12px 4px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    gap: 7px;
+  }
+  .pr-h3 .lc-add,
+  .pr-h3 .lc-del {
+    letter-spacing: 0;
+  }
+  .pr-ov {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding-left: 12px;
+  }
+  .pr-ov svg {
+    width: 13px;
+    height: 13px;
+  }
+  .pr-ov-body {
+    padding: 18px 22px;
+    overflow: hidden;
+  }
+  .pr-ov-body h4 {
+    margin: 0 0 6px;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+  .pr-ov-body h4 .pr-num {
+    font-weight: 400;
+    color: var(--muted);
+  }
+  .pr-meta {
+    margin: 0 0 10px;
+    color: var(--muted);
+  }
+  .pr-meta b {
+    color: var(--text);
+  }
+  .pr-ov-body .chips {
+    padding: 0;
+    margin: 0;
+  }
+  .pr-desc {
+    margin: 14px 0 0;
+    max-width: 52ch;
+  }
+  .pr-ov-body h5 {
+    margin: 18px 0 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .pr-jobs {
+    display: flex;
+    align-items: center;
+  }
+  .pr-job {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px 3px 8px;
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    font-size: 12px;
+    background: var(--panel);
+  }
+  .pr-job svg {
+    width: 12px;
+    height: 12px;
+    color: var(--added);
+  }
+  .pr-edge {
+    width: 22px;
+    height: 1px;
+    background: var(--edge);
+  }
+  .s4 .pr-new .r-btn {
+    animation: pr-arrive 1.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes pr-arrive {
+    from {
+      background: color-mix(in srgb, var(--blue) 28%, var(--select));
+    }
+  }
+  .pr-term {
+    width: min(100%, 600px);
+  }
+  .pr-term .ms-term-body {
+    min-height: 168px;
+  }
+  .pr-term .ms-term-body p {
+    overflow-wrap: anywhere;
+  }
+  .s2 .pr-o2,
+  .s3 .pr-o3,
+  .s4 .pr-o4 {
+    display: block;
+    animation: ms-line 0.2s ease-out;
+  }
+  .s2 .pr-typing {
+    display: none;
+  }
+
+  @media (max-width: 860px) {
+    .pr-plate {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .pr-win .k-main {
+      display: none;
+    }
+  }
+  @media (max-width: 720px) {
+    .prscene {
+      padding-bottom: 0;
+    }
+    .pr-win {
+      height: auto;
+    }
+    .pr-win .k-body {
+      grid-template-columns: 36px minmax(0, 1fr);
+    }
+    .pr-win .pr-plates {
+      grid-column: 1 / -1;
+    }
+    .pr-win .k-lists {
+      border-bottom: 1px solid var(--hairline);
+    }
+    .pr-win .k-rail {
+      border-right: 0;
+      border-bottom: 1px solid var(--hairline);
+    }
+    .pr-term {
+      position: relative;
+      right: auto;
+      bottom: auto;
+      width: 100%;
+      margin-top: -20px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .s4 .pr-plate.pr-after,
+    .s4 .pr-new .r-btn {
+      animation: none !important;
+    }
+  }
+</style>
+
+<script>
+  const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
+  const STEPS = ['s1', 's2', 's3', 's4'];
+
+  // The markup ships in the final state, so the scene reads without JavaScript or with reduced motion.
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    for (const scene of document.querySelectorAll<HTMLElement>('[data-prscene]')) {
+      const typed = scene.querySelector<HTMLElement>('[data-type]')!;
+      const tabs = [...scene.querySelectorAll<HTMLElement>('[data-list]')];
+      const dot = scene.querySelector<HTMLElement>('.k-lists .dot')!;
+      const busyDot = dot.className;
+      const show = (n: number, text = typed.dataset.type!) => {
+        scene.classList.remove(...STEPS);
+        STEPS.slice(0, n).forEach(c => scene.classList.add(c));
+        const to = n >= 4 ? 'folders' : 'agents';
+        tabs.forEach(t => t.setAttribute('aria-selected', String(t.dataset.list === to)));
+        dot.className = to === 'folders' ? busyDot : 'dot';
+        typed.textContent = text;
+      };
+
+      let playing = false;
+      async function play() {
+        if (playing) return;
+        playing = true;
+        show(1, '');
+        await wait(500);
+        for (const ch of typed.dataset.type!) {
+          typed.textContent += ch;
+          await wait(25 + Math.random() * 35);
+        }
+        await wait(400);
+        show(2);
+        await wait(900);
+        show(3);
+        await wait(1300);
+        show(4);
+        playing = false;
+      }
+
+      let armed = true;
+      new IntersectionObserver(
+        ([e]) => {
+          if (!e.isIntersecting || !armed) return;
+          armed = false;
+          play();
+        },
+        { rootMargin: '0px 0px -35% 0px' },
+      ).observe(scene);
+      new IntersectionObserver(([e]) => {
+        if (!e.isIntersecting) armed = true;
+      }).observe(scene);
+      show(1, '');
+    }
+  }
+</script>
