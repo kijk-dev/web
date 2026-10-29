@@ -7,6 +7,7 @@ import MachinesScene from '../components/MachinesScene.astro';
 import BranchGraph from '../components/BranchGraph.astro';
 import ReviewDemo from '../components/ReviewDemo.astro';
 import AgentRow from '../components/AgentRow.astro';
+import PrScene from '../components/PrScene.astro';
 import { icons } from '../components/icons';
 import type { Agent } from '../data/demo';
 
@@ -197,6 +198,33 @@ const states = [
         </div>
       </div>
       <MachinesScene />
+    </section>
+
+    <section id="folders" class="course wide" aria-labelledby="folders-title">
+      <div class="words">
+        <h2 id="folders-title">Open a folder or a pull request.</h2>
+        <div>
+          <p>
+            kijk is also a light viewer for folders you pick. <code class="nw">kijk ~/code/docs</code> adds the folder to
+            the Folders list. The bar on the left switches between Agents and Folders, and the open folder stays open.
+          </p>
+          <p>
+            Give kijk a pull request link and it finds a clone on this machine. With none, it clones the repo with your
+            own <code>gh</code> or <code>glab</code>, adds it to Folders and opens the pull request.
+          </p>
+          <ul class="facts">
+            <li>
+              <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>0</kbd> switches lists. While Folders shows, a dot on Agents says an agent
+              is busy or done.
+            </li>
+            <li>
+              It clones only from github.com, gitlab.com, or a host <code>gh</code> or <code>glab</code> is logged in to.
+              kijk stores no token.
+            </li>
+          </ul>
+        </div>
+      </div>
+      <PrScene />
     </section>
 
     <section id="keys" class="course" aria-labelledby="keys-title">
