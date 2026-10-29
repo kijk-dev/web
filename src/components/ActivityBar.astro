@@ -1,0 +1,133 @@
+---
+import type { Agent } from '../data/demo';
+import type { Folder } from '../data/folders';
+import { holds, label, tip, dot, type List, type ListCounts } from '../data/lists';
+import { icons } from './icons';
+
+interface Props {
+  list?: List;
+  agents: Agent[];
+  folders: Folder[];
+}
+const { list = 'agents', agents, folders } = Astro.props;
+const counts: ListCounts = {
+  agents: agents.length,
+  busy: agents.filter(a => a.busy).length,
+  finished: agents.filter(a => a.finished).length,
+  folders: folders.length,
+  missing: folders.filter(f => f.missing).length,
+};
+const what = holds(counts);
+const tabs = [
+  { l: 'agents', icon: icons.bot },
+  { l: 'folders', icon: icons.folder },
+] as const;
+---
+
+<div class="k-lists" role="tablist" aria-label="Lists" aria-orientation="vertical" data-lists>
+  {
+    tabs.map(({ l, icon }) => (
+      <button type="button" role="tab" data-list={l} aria-selected={String(l === list)} aria-label={label(l, what[l])} aria-keyshortcuts="Control+Alt+0">
+        <Fragment set:html={icon} />
+        {l === 'agents' && <i class={dot(list, counts)} aria-hidden="true" />}
+        <span class="k-tip" aria-hidden="true">{tip(l, what[l], list)}</span>
+      </button>
+    ))
+  }
+</div>
+
+<style is:global>
+  .k-lists {
+    position: relative;
+    z-index: 6;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding-top: 3px;
+    background: var(--panel);
+    border-right: 1px solid var(--hairline);
+  }
+  .k-lists button {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 4px;
+    background: none;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .k-lists button:hover {
+    color: var(--text);
+    background: var(--hairline);
+  }
+  .k-lists button[aria-selected='true'] {
+    color: var(--blue);
+    background: var(--select);
+  }
+  .k-lists button:active {
+    background: color-mix(in srgb, var(--blue) 22%, var(--select));
+  }
+  .k-lists svg.i {
+    width: 16px;
+    height: 16px;
+  }
+  .k-lists .dot {
+    display: none;
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px var(--panel);
+  }
+  .k-lists .dot.busy {
+    display: block;
+    background: var(--ember-deep);
+    animation: k-fade 1.2s ease-in-out infinite;
+  }
+  .k-lists .dot.fin {
+    display: block;
+    background: var(--blue);
+  }
+  @media (prefers-color-scheme: dark) {
+    .k-lists .dot.busy {
+      background: var(--ember);
+    }
+  }
+  .k-tip {
+    display: none;
+    position: absolute;
+    left: 34px;
+    top: 0;
+    z-index: 10;
+    padding: 6px 9px;
+    border-radius: 6px;
+    background: #23272d;
+    color: #f0f2f4;
+    border: 1px solid rgb(255 255 255 / 0.08);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.25);
+    font-size: 12px;
+    line-height: 1.45;
+    text-align: left;
+    white-space: pre;
+    pointer-events: none;
+  }
+  .k-tip::first-line {
+    font-weight: 600;
+  }
+  .k-lists button:hover .k-tip {
+    display: block;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .k-lists .dot.busy {
+      animation: none;
+    }
+  }
+</style>

@@ -1,4 +1,4 @@
-import { agents, totals } from './demo';
+import { agents, totals, type Agent } from './demo';
 
 export interface Folder {
   id: string;
@@ -8,11 +8,13 @@ export interface Folder {
   add: number;
   del: number;
   missing?: boolean;
+  // The agent that works in the folder; its row shows the agent's mark.
+  agent?: Agent;
 }
 
 const from = (id: string, parent: string): Folder => {
   const a = agents.find(x => x.id === id)!;
-  return { id, repo: a.repo, branch: a.branch, parent, ...totals(a) };
+  return { id, repo: a.repo, branch: a.branch, parent, ...totals(a), agent: a };
 };
 
 export const folders: Folder[] = [
@@ -21,6 +23,3 @@ export const folders: Folder[] = [
   from('cli', '~/code'),
   { id: 'ksml', repo: 'ksml', branch: '', parent: '~/code/worktrees', add: 0, del: 0, missing: true },
 ];
-
-// The folder that kijk ~/code/docs adds in the demo; its plate is the docs agent's.
-export const arriving: Folder = from('docs', '~/code');

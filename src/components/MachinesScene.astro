@@ -2,6 +2,8 @@
 import { agents, devbox, counts, totals, rows, type Agent } from '../data/demo';
 import { icons } from './icons';
 import AgentRow from './AgentRow.astro';
+import ActivityBar from './ActivityBar.astro';
+import { folders } from '../data/folders';
 
 const LAPTOP =
   '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16"/></svg>';
@@ -40,6 +42,7 @@ const saved =
         <span class="k-title-text" data-title>{devbox[0].repo} — kijk</span>
       </div>
       <div class="k-body">
+        <ActivityBar agents={[...local, ...devbox]} folders={folders} />
         <aside class="k-rail ms-rail">
           <header>Agents <span class="k-count" data-count>{local.length + devbox.length}</span></header>
           {
@@ -457,7 +460,13 @@ const saved =
       height: auto;
     }
     .ms-win .k-body {
-      grid-template-columns: minmax(0, 1fr);
+      grid-template-columns: 36px minmax(0, 1fr);
+    }
+    .ms-win .ms-plates {
+      grid-column: 1 / -1;
+    }
+    .ms-win .k-lists {
+      border-bottom: 1px solid var(--hairline);
     }
     .ms-win .k-rail {
       border-right: 0;

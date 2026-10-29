@@ -2,6 +2,9 @@
 import { agents, counts, totals, rows, fileRows, type Agent, type Change } from '../data/demo';
 import { icons } from './icons';
 import AgentRow from './AgentRow.astro';
+import ActivityBar from './ActivityBar.astro';
+import FolderRow from './FolderRow.astro';
+import { folders } from '../data/folders';
 
 const first = 'shop-api';
 const letter = { M: 'M', A: 'A', U: 'U' } as const;
@@ -36,10 +39,14 @@ const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
     <span class="k-title-text" data-title>shop-api — kijk</span>
   </div>
   <div class="k-body">
+    <ActivityBar agents={agents} folders={folders} />
     <aside class="k-rail" aria-label="Agents">
-      <header>Agents <span class="k-count">{agents.length}</span></header>
-      <ol class="rows">
+      <header><span data-list-name>Agents</span> <span class="k-count" data-list-count>{agents.length}</span></header>
+      <ol class="rows" data-rows="agents">
         {agents.map((a, i) => <AgentRow a={a} n={i + 1} on={a.id === first} />)}
+      </ol>
+      <ol class="rows" data-rows="folders" hidden>
+        {folders.map((f, i) => <FolderRow f={f} n={i + 1} on={f.id === first} />)}
       </ol>
     </aside>
 
@@ -248,7 +255,7 @@ const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
 
 <style is:global>
   .kijk {
-    --rail-w: 264px;
+    --rail-w: 248px;
     --side-w: 252px;
     display: grid;
     grid-template-rows: 30px minmax(0, 1fr) 24px;
@@ -292,7 +299,7 @@ const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
   }
   .k-body {
     display: grid;
-    grid-template-columns: var(--rail-w) minmax(0, 1fr);
+    grid-template-columns: 36px var(--rail-w) minmax(0, 1fr);
     min-height: 0;
   }
 
@@ -1105,8 +1112,14 @@ const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
       border-radius: 10px;
     }
     .k-body {
-      grid-template-columns: minmax(0, 1fr);
+      grid-template-columns: 36px minmax(0, 1fr);
       grid-template-rows: auto minmax(0, 1fr);
+    }
+    .k-plates {
+      grid-column: 1 / -1;
+    }
+    .k-lists {
+      border-bottom: 1px solid var(--hairline);
     }
     .k-rail {
       border-right: 0;
@@ -1138,6 +1151,8 @@ const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
 </style>
 
 <script>
+  import { holds, label, tip, dot, type List } from '../data/lists';
+
   const root = document.querySelector<HTMLElement>('[data-kijk]')!;
   const title = root.querySelector<HTMLElement>('[data-title]')!;
   const wraps = [...root.querySelectorAll<HTMLElement>('.k-rail .row')];
@@ -1152,16 +1167,64 @@ const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
   const firstOn = wraps.find(w => w.classList.contains('on'));
   if (firstOn) showRow(firstOn, false);
 
+  const bar = root.querySelector<HTMLElement>('[data-lists]')!;
+  const listName = root.querySelector<HTMLElement>('[data-list-name]')!;
+  const listCount = root.querySelector<HTMLElement>('[data-list-count]')!;
+  const tabs = [...bar.querySelectorAll<HTMLButtonElement>('[data-list]')];
+  let list: List = 'agents';
+  const shown = (w: HTMLElement) => !w.closest<HTMLElement>('[data-rows]')!.hidden;
+  const visible = () => wraps.filter(w => shown(w) && w.querySelector('button'));
+  function setList(to: List) {
+    list = to;
+    const name = to === 'agents' ? 'Agents' : 'Folders';
+    rail.setAttribute('aria-label', name);
+    listName.textContent = name;
+    root.querySelectorAll<HTMLElement>('[data-rows]').forEach(r => (r.hidden = r.dataset.rows !== to));
+    listCount.textContent = String(root.querySelectorAll(`[data-rows="${to}"] .row`).length);
+    showLists();
+    const on = visible().find(w => w.classList.contains('on'));
+    if (on) showRow(on, false);
+  }
+  function showLists() {
+    const n = (sel: string) => root.querySelectorAll(sel).length;
+    const c = {
+      agents: n('[data-rows="agents"] .row'),
+      busy: n('[data-rows="agents"] .row.busy'),
+      finished: n('[data-rows="agents"] .row.finished'),
+      folders: n('[data-rows="folders"] .row'),
+      missing: n('[data-rows="folders"] .row.missing'),
+    };
+    const what = holds(c);
+    tabs.forEach(t => {
+      const l = t.dataset.list as List;
+      t.setAttribute('aria-selected', String(l === list));
+      t.setAttribute('aria-label', label(l, what[l]));
+      t.querySelector('.k-tip')!.textContent = tip(l, what[l], list);
+    });
+    bar.querySelector('.dot')!.className = dot(list, c);
+  }
+  bar.addEventListener('click', e => {
+    const t = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-list]');
+    if (t) setList(t.dataset.list as List);
+  });
+  bar.addEventListener('keydown', e => {
+    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) return;
+    e.preventDefault();
+    const to = list === 'agents' ? 'folders' : 'agents';
+    setList(to);
+    bar.querySelector<HTMLButtonElement>(`[data-list="${to}"]`)!.focus();
+  });
+
   function pick(id: string, focus = false) {
     wraps.forEach(w => {
       const on = w.dataset.agent === id;
       w.classList.toggle('on', on);
-      const b = w.querySelector('button')!;
-      b.setAttribute('aria-pressed', String(on));
+      const b = w.querySelector('.r-btn')!;
+      if (b.tagName === 'BUTTON') b.setAttribute('aria-pressed', String(on));
       if (on) {
         w.classList.remove('finished');
-        if (focus) b.focus({ preventScroll: true });
-        showRow(w);
+        if (focus && shown(w)) b.focus({ preventScroll: true });
+        if (shown(w)) showRow(w);
       }
     });
     plates.forEach(p => {
@@ -1175,12 +1238,13 @@ const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
     });
     const repo = root.querySelector(`.plate[data-agent="${id}"] .k-folder`)?.textContent;
     title.textContent = `${repo} — kijk`;
+    showLists();
   }
 
   root.addEventListener('click', e => {
     const t = e.target as HTMLElement;
     const row = t.closest<HTMLElement>('.k-rail .r-btn');
-    if (row) return pick(row.dataset.agent!);
+    if (row) return row.dataset.agent ? pick(row.dataset.agent) : undefined;
 
     const plate = t.closest<HTMLElement>('.plate');
     if (!plate) return;
@@ -1209,20 +1273,26 @@ const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
     }
   });
 
-  // Ctrl+Alt+1…7 opens agent 1 to 7, as in kijk. e.code, because Alt changes e.key on macOS.
+  // As in kijk: Ctrl+Alt+0 switches lists and Ctrl+Alt+1…9 open a row, but not while typing.
+  // e.code, because Alt changes e.key on macOS.
   document.addEventListener('keydown', e => {
-    if (!e.ctrlKey || !e.altKey) return;
-    const n = /^Digit([1-9])$/.exec(e.code)?.[1];
-    const w = n && wraps[+n - 1];
-    if (!w) return;
+    const n = /^Digit([0-9])$/.exec(e.code)?.[1];
+    if (!n || !e.ctrlKey || !e.altKey || e.metaKey || e.shiftKey) return;
+    if ((e.target as HTMLElement).closest?.('input, textarea')) return;
+    if (n === '0') setList(list === 'agents' ? 'folders' : 'agents');
+    else {
+      const w = visible()[+n - 1];
+      if (!w) return;
+      pick(w.dataset.agent!, true);
+    }
     e.preventDefault();
-    pick(w.dataset.agent!, true);
   });
-  root.querySelector('.rows')!.addEventListener('keydown', e => {
+  rail.addEventListener('keydown', e => {
     const k = (e as KeyboardEvent).key;
     if (k !== 'ArrowDown' && k !== 'ArrowUp' && k !== 'ArrowLeft' && k !== 'ArrowRight') return;
-    const i = wraps.findIndex(w => w.classList.contains('on'));
-    const next = wraps[(i + (k === 'ArrowDown' || k === 'ArrowRight' ? 1 : -1) + wraps.length) % wraps.length];
+    const ws = visible();
+    const i = ws.findIndex(w => w.classList.contains('on'));
+    const next = ws[(i + (k === 'ArrowDown' || k === 'ArrowRight' ? 1 : -1) + ws.length) % ws.length];
     e.preventDefault();
     pick(next.dataset.agent!, true);
   });
@@ -1310,5 +1380,6 @@ const openOf = (a: Agent) => a.open ?? a.changes[0]?.path;
     const state = w.querySelector<HTMLElement>('[data-state]')!;
     state.textContent = state.textContent!.replace('Busy', 'Idle');
     if (!w.classList.contains('on')) w.classList.add('finished');
+    showLists();
   }, 14000);
 </script>
