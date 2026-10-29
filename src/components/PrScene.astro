@@ -14,6 +14,7 @@ const dir = (p: string) => p.split('/').slice(0, -1).join('/');
 const statusClass = { M: 'modified', A: 'added', U: 'untracked' } as const;
 const c0 = shop.changes[0];
 const added = pr.files.reduce((n, f) => n + f.add, 0);
+const removed = pr.files.reduce((n, f) => n + f.del, 0);
 ---
 
 <figure class="prscene s1 s2 s3 s4" data-prscene>
@@ -106,7 +107,7 @@ const added = pr.files.reduce((n, f) => n + f.add, 0);
                   <span class="pr-top"><Fragment set:html={icons.github} /><span class="pr-num">#{pr.num}</span><span class="pr-title">{pr.title}</span></span>
                   <span class="pr-refs"><span class="pr-ref cur">{pr.head}</span> → <span class="pr-ref">{pr.base}</span></span>
                 </div>
-                <h3 class="pr-h3">Changes <span class="n">{pr.files.length}</span> <span class="lc-add">+{added}</span></h3>
+                <h3 class="pr-h3">Changes <span class="n">{pr.files.length}</span> <span class="lc-add">+{added}</span>{removed > 0 && <span class="lc-del">−{removed}</span>}</h3>
                 <div class="item selected pr-ov"><Fragment set:html={icons.pr} /> Overview</div>
                 {pr.files.map(f => (
                   <div class="item change">
@@ -252,7 +253,8 @@ const added = pr.files.reduce((n, f) => n + f.add, 0);
     display: flex;
     gap: 7px;
   }
-  .pr-h3 .lc-add {
+  .pr-h3 .lc-add,
+  .pr-h3 .lc-del {
     letter-spacing: 0;
   }
   .pr-ov {
